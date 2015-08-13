@@ -11,30 +11,18 @@ require "utils"
 ----------------------------------------------------------------------------------------------------
 
 
-function PadSynth:__init (instrument, create)
+function PadSynth:__init (instrument)
 
     self.instrument = instrument
 
-    --TODO: check if it's a PadSynth instrument?
-
     if
         instrument.name == ""
-        and #self.instrument.samples == 1
-        and self.instrument:sample(1).name == ""
-        and not self.instrument:sample(1).sample_buffer.has_sample_data
+        and #self.instrument.samples == 0
     then
-        self.instrument.name = "New PadSynth Instrument"
+        self.instrument.name = "[PadSynth]"
     end
 
     self:initialize_parameters ()
-
-    if create then
-        self.instrument:clear ()
-        self.instrument.name = "New PadSynth Instrument"
-        self.instrument:delete_sample_mapping_at (renoise.Instrument.LAYER_NOTE_ON, 1)
-    else
-        self:load_parameters ()
-    end
 
     self.window = PadSynthWindow (self)
 
@@ -550,7 +538,11 @@ function PadSynth:create_sample (wavetable, note, range)
 
     sample_buffer:finalize_sample_data_changes ()
 
-    self.instrument:insert_sample_mapping (renoise.Instrument.LAYER_NOTE_ON, sample_index, note, range)
+    -- self.instrument:insert_sample_mapping (renoise.Instrument.LAYER_NOTE_ON, sample_index, note, range)
+    local sample_mapping = self.instrument:sample(sample_index).sample_mapping
+    sample_mapping.layer = renoise.Instrument.LAYER_NOTE_ON
+    sample_mapping.base_note = note
+    sample_mapping.note_range = range
     sample.name = "PadSynth Note " .. name_of_renoise_note (note)
     sample.volume = self.volume
     if self.new_note_action == 2 then
@@ -672,21 +664,14 @@ end
 function PadSynth:save_parameters ()
 
     local index = 1
-    if
-        #self.instrument.samples == 1
-        and self.instrument:sample(1).name == ""
-        and not self.instrument:sample(1).sample_buffer.has_sample_data
-    then
-        --TODO: should check if there is one?
-        self.instrument:delete_sample_mapping_at (renoise.Instrument.LAYER_NOTE_ON, 1)
-    else
-        while index <= #self.instrument.samples
-              and string.sub (self.instrument:sample(index).name, 1, 19) ~= "PadSynth Parameters" do
-            index = index + 1
-        end
-        if index > #self.instrument.samples then
-            self.instrument:insert_sample_at (index)
-        end
+    while
+        index <= #self.instrument.samples
+        and string.sub (self.instrument:sample(index).name, 1, 19) ~= "PadSynth Parameters"
+    do
+        index = index + 1
+    end
+    if index > #self.instrument.samples then
+        self.instrument:insert_sample_at (index)
     end
 
     self.instrument.samples[index].sample_buffer:create_sample_data (44100, 16, 1, 1)
@@ -735,6 +720,10 @@ function PadSynth:save_parameters ()
     name = name .. "} "
 
     self.instrument.samples[index].name = name .. "}"
+
+    self.instrument.samples[index].volume = 0.0
+    self.instrument.samples[index].sample_mapping.note_range = {0, 0}
+    self.instrument.samples[index].sample_mapping.velocity_range = {0, 0}
 
 end
 

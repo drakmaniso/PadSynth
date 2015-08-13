@@ -12,18 +12,8 @@ require "PadSynth"
 local function open_or_create ()
 
     local instrument = renoise.song().selected_instrument
-    local is_padsynth_instrument = false
 
-    local index = 1
-    while index <= #instrument.samples and not is_padsynth_instrument do
-        if string.sub (instrument:sample(index).name, 1, 19) == "PadSynth Parameters" then
-            is_padsynth_instrument = true
-        else
-            index = index + 1
-        end
-    end
-
-    PadSynth (instrument, false)
+    PadSynth (instrument)
 
 end
 
@@ -110,4 +100,3 @@ end
 
 
 ----------------------------------------------------------------------------------------------------------------------------------------------
-
