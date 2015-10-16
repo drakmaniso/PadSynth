@@ -22,7 +22,7 @@ function PadSynth:__init (instrument)
         self.instrument.name = "[PadSynth]"
     end
 
-    self:initialize_parameters ()
+    self:load_parameters ()
 
     self.window = PadSynthWindow (self)
 
@@ -489,7 +489,7 @@ function PadSynth:create_sample (wavetable, note, range)
     end
     local sample_index = #self.instrument.samples + 1
     if index <= #self.instrument.samples then
-        sample_index = index
+        sample_index = index + 1
     end
     local sample = self.instrument:insert_sample_at (sample_index)
 
@@ -739,8 +739,8 @@ function PadSynth:load_parameters ()
         index = index + 1
     end
 
+    self:initialize_parameters ()
     if index > #self.instrument.samples then
-        self:initialize_parameters ()
         return
     end
 
