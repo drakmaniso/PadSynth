@@ -553,6 +553,15 @@ function PadSynth:create_sample (wavetable, note, range)
         sample.new_note_action = renoise.Sample.NEW_NOTE_ACTION_NOTE_CUT
     end
     sample.autofade = (self.autofade == 2)
+    if self.interpolation == 2 then
+        sample.interpolation_mode = renoise.Sample.INTERPOLATE_LINEAR
+    elseif self.interpolation == 3 then
+        sample.interpolation_mode = renoise.Sample.INTERPOLATE_CUBIC
+    elseif self.interpolation == 4 then
+        sample.interpolation_mode = renoise.Sample.INTERPOLATE_SINC
+    else
+        sample.interpolation_mode = renoise.Sample.INTERPOLATE_NONE
+    end
 
     return index
 
@@ -616,7 +625,7 @@ end
 
 function PadSynth:initialize_parameters ()
 
-    self.version = 3
+    self.version = 4
 
     self.volume = 0.5
     self.sample_duration = 1
@@ -624,6 +633,7 @@ function PadSynth:initialize_parameters ()
 
     self.autofade = 2
     self.new_note_action = 2
+    self.interpolation = 4
 
     self.overtones_placement = 1
     self.overtones_treshold = 1
@@ -686,6 +696,7 @@ function PadSynth:save_parameters ()
 
     name = name .. "autofade=" .. self.autofade .. ", "
     name = name .. "new_note_action=" .. self.new_note_action .. ", "
+    name = name .. "interpolation=" .. self.interpolation .. ", "
 
     name = name .. "overtones_placement=" .. self.overtones_placement .. ", "
     name = name .. "overtones_treshold=" .. self.overtones_treshold .. ", "
@@ -752,12 +763,14 @@ function PadSynth:load_parameters ()
 
     local data = f ()
 
+    self.version = data.version
     self.volume = data.volume
     self.sample_duration = data.sample_duration
     self.nb_channels = data.nb_channels
 
     self.autofade = data.autofade
     self.new_note_action = data.new_note_action
+    self.interpolation = data.interpolation
 
     self.overtones_placement = data.overtones_placement
     self.overtones_param1 = data.overtones_param1
@@ -796,6 +809,11 @@ function PadSynth:load_parameters ()
     if self.version == 0 then
         self.bandwidth_growth = 1
         self.version = 1
+    end
+
+    if self.version == 3 then
+        self.interpolation = 4
+        --TODO: self.version = 4
     end
 
 end

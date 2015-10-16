@@ -493,14 +493,11 @@ function PadSynthWindow:gui ()
 
                     vb:horizontal_aligner
                     {
-                        mode = "center",
-                        vb:text { font = "bold", text = "New Note Action" },
-                    },
+                        mode = "justify",
 
-                    vb:horizontal_aligner
-                    {
-                        mode = "center",
-                        vb:chooser
+                        vb:text { font = "bold", text = "NNA" },
+
+                        vb:popup
                         {
                             id = "new_note_action",
                             items = { "Cut", "Note Off", "Continue", },
@@ -518,9 +515,40 @@ function PadSynthWindow:gui ()
                                     end
                                 end
                             end,
-                        },
-                        tooltip = "Define what happens when a new note is triggered in the same column\nCut: the previous note is interrupted (without release)\nNote Off: the previous note ends normally (play the release part of the envelope)\nContinue: the previous note is held",
+                            tooltip = "Define what happens when a new note is triggered in the same column\nCut: the previous note is interrupted (without release)\nNote Off: the previous note ends normally (play the release part of the envelope)\nContinue: the previous note is held",
+                            },
                     },
+
+                    vb:horizontal_aligner
+                    {
+                        mode = "justify",
+
+                        vb:text { font = "bold", text = "Interpolation" },
+
+                        vb:popup
+                        {
+                            id = "interpolation",
+                            items = { "None", "Linear", "Cubic", "Sinc", },
+                            value = ps.interpolation,
+                            notifier = function ()
+                                for i, sample in ipairs (ps.instrument.samples) do
+                                    if string.sub (sample.name, 1, 13) == "PadSynth Note" then
+                                        if vb.views.interpolation.value == 2 then
+                                            sample.interpolation_mode = renoise.Sample.INTERPOLATE_LINEAR
+                                        elseif vb.views.interpolation.value == 3 then
+                                            sample.interpolation_mode = renoise.Sample.INTERPOLATE_CUBIC
+                                        elseif vb.views.interpolation.value == 4 then
+                                            sample.interpolation_mode = renoise.Sample.INTERPOLATE_SINC
+                                        else
+                                            sample.interpolation_mode = renoise.Sample.INTERPOLATE_NONE
+                                        end
+                                    end
+                                end
+                            end,
+                            tooltip = "Define the interpolation method used when repitching the sample.",
+                            },
+                    },
+
                 },
 
             },
@@ -1362,4 +1390,3 @@ end
 
 
 ----------------------------------------------------------------------------------------------------
-
