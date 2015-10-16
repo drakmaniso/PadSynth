@@ -416,12 +416,12 @@ function PadSynth:generate_one_sample (note, range_start, range_end, render_freq
     end
     if render_frequency_table then
         if index <= #self.instrument.samples then
-            self.instrument.samples[index].sample_buffer:prepare_sample_data_changes ()
+            -- self.instrument.samples[index].sample_buffer:prepare_sample_data_changes ()
             self.instrument.samples[index].sample_buffer:create_sample_data (44100, 32, 1, nb_frames / 2)
             for i = 1, nb_frames / 2 do
                 self.instrument.samples[index].sample_buffer:set_sample_data (1, i, 2 * to_display(freq_amp[i] / ampl_max) - 1)
             end
-            self.instrument.samples[index].sample_buffer:finalize_sample_data_changes ()
+            -- self.instrument.samples[index].sample_buffer:finalize_sample_data_changes ()
         end
     end
 
