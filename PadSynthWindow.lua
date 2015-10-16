@@ -167,6 +167,8 @@ function PadSynthWindow:update_parameters ()
 
     self.pad_synth.autofade = views.autofade.value
     self.pad_synth.new_note_action = views.new_note_action.value
+    self.pad_synth.interpolation = views.interpolation.value
+    self.pad_synth.oversample_enabled = views.oversample_enabled.value
 
     self.pad_synth.overtones_placement = views.overtones_placement.value
     self.pad_synth.overtones_treshold = views.overtones_treshold.value
@@ -519,7 +521,7 @@ function PadSynthWindow:gui ()
                     {
                         mode = "justify",
 
-                        vb:text { font = "bold", text = "Interpolation" },
+                        vb:text { text = "Interpolation" },
 
                         vb:popup
                         {
@@ -543,6 +545,27 @@ function PadSynthWindow:gui ()
                             end,
                             tooltip = "Define the interpolation method used when repitching the sample.",
                             },
+                    },
+
+                    vb:horizontal_aligner
+                    {
+                        mode = "left",
+
+                        vb:checkbox
+                        {
+                            id = "oversample_enabled",
+                            value = ps.oversample_enabled,
+                            notifier = function ()
+                                for i, sample in ipairs (ps.instrument.samples) do
+                                    if string.sub (sample.name, 1, 13) == "PadSynth Note" then
+                                        sample.oversample_enabled = vb.views.oversample_enabled.value
+                                    end
+                                end
+                            end,
+                            tooltip = "Whether interpolation is oversampled or not."
+                        },
+
+                        vb:text { text = "Oversampling" },
                     },
 
                 },

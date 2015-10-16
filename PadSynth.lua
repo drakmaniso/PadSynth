@@ -562,6 +562,7 @@ function PadSynth:create_sample (wavetable, note, range)
     else
         sample.interpolation_mode = renoise.Sample.INTERPOLATE_NONE
     end
+    sample.oversample_enabled = self.oversample_enabled
 
     return index
 
@@ -634,6 +635,7 @@ function PadSynth:initialize_parameters ()
     self.autofade = true
     self.new_note_action = 2
     self.interpolation = 4
+    self.oversample_enabled = true
 
     self.overtones_placement = 1
     self.overtones_treshold = 1
@@ -697,6 +699,7 @@ function PadSynth:save_parameters ()
     name = name .. "autofade=" .. (self.autofade and "true" or "false") .. ", "
     name = name .. "new_note_action=" .. self.new_note_action .. ", "
     name = name .. "interpolation=" .. self.interpolation .. ", "
+    name = name .. "oversample_enabled=" .. (self.oversample_enabled and "true" or "false") .. ", "
 
     name = name .. "overtones_placement=" .. self.overtones_placement .. ", "
     name = name .. "overtones_treshold=" .. self.overtones_treshold .. ", "
@@ -814,6 +817,7 @@ function PadSynth:load_parameters ()
     if self.version == 3 then
         self.autofade = self.autofade == 2
         self.interpolation = 4
+        self.oversample_enabled = true
         --TODO: self.version = 4
     end
 
