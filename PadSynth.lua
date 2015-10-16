@@ -552,7 +552,7 @@ function PadSynth:create_sample (wavetable, note, range)
     else
         sample.new_note_action = renoise.Sample.NEW_NOTE_ACTION_NOTE_CUT
     end
-    sample.autofade = (self.autofade == 2)
+    sample.autofade = self.autofade
     if self.interpolation == 2 then
         sample.interpolation_mode = renoise.Sample.INTERPOLATE_LINEAR
     elseif self.interpolation == 3 then
@@ -631,7 +631,7 @@ function PadSynth:initialize_parameters ()
     self.sample_duration = 1
     self.nb_channels = 2
 
-    self.autofade = 2
+    self.autofade = true
     self.new_note_action = 2
     self.interpolation = 4
 
@@ -694,7 +694,7 @@ function PadSynth:save_parameters ()
     name = name .. "sample_duration=" .. self.sample_duration .. ", "
     name = name .. "nb_channels=" .. self.nb_channels .. ", "
 
-    name = name .. "autofade=" .. self.autofade .. ", "
+    name = name .. "autofade=" .. (self.autofade and "true" or "false") .. ", "
     name = name .. "new_note_action=" .. self.new_note_action .. ", "
     name = name .. "interpolation=" .. self.interpolation .. ", "
 
@@ -812,6 +812,7 @@ function PadSynth:load_parameters ()
     end
 
     if self.version == 3 then
+        self.autofade = self.autofade == 2
         self.interpolation = 4
         --TODO: self.version = 4
     end

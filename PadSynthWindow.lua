@@ -460,42 +460,36 @@ function PadSynthWindow:gui ()
                 },
 
 
-                vb:column
+                vb:vertical_aligner
                 {
+                    mode = "top",
 
                     vb:horizontal_aligner
                     {
-                        mode = "center",
-                        vb:text { font = "bold", text = "Attack" },
-                    },
+                        mode = "left",
 
-
-                    vb:row
-                    {
-                        vb:switch
+                        vb:checkbox
                         {
                             id = "autofade",
-                            items = { "Raw", "Autofade" },
                             value = ps.autofade,
-                            width = 150,
                             notifier = function ()
                                 for i, sample in ipairs (ps.instrument.samples) do
                                     if string.sub (sample.name, 1, 13) == "PadSynth Note" then
-                                        sample.autofade = (vb.views.autofade.value == 2)
+                                        sample.autofade = vb.views.autofade.value
                                     end
                                 end
                             end,
+                            tooltip = "Raw: play the sample as is\nAutofade: apply a quick fade to the beginning and end to prevent clicking"
                         },
-                        tooltip = "Raw: play the sample as is\nAutofade: apply a quick fade to the beginning and end to prevent clicking"
-                    },
 
-                    vb:row { height = 8 },
+                        vb:text { text = "Attack Quick Fade" },
+                    },
 
                     vb:horizontal_aligner
                     {
                         mode = "justify",
 
-                        vb:text { font = "bold", text = "NNA" },
+                        vb:text { text = "NNA" },
 
                         vb:popup
                         {
@@ -518,6 +512,8 @@ function PadSynthWindow:gui ()
                             tooltip = "Define what happens when a new note is triggered in the same column\nCut: the previous note is interrupted (without release)\nNote Off: the previous note ends normally (play the release part of the envelope)\nContinue: the previous note is held",
                             },
                     },
+
+                    vb:row { height = 8},
 
                     vb:horizontal_aligner
                     {
