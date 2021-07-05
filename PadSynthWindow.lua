@@ -12,10 +12,18 @@ function PadSynthWindow:__init (pad_synth)
     self.pad_synth = pad_synth
 
     self.harmonics = {}
-    for i = 1, 256 do self.harmonics[i] = 0 end
+    self.temp_harmonics = {}
+    for i = 1, 256 do 
+        self.harmonics[i] = 0
+        self.temp_harmonics[i] = 0
+    end
     for i, v in ipairs (pad_synth.harmonics) do
         self.harmonics[i] = v
+        self.temp_harmonics[i] = v
     end
+
+    self.formula_custom_string = ""
+    self.formula_preset_choice = false
 
 end
 
@@ -258,6 +266,19 @@ local function to_note_number (v)
     return octave * 12 + note
 
 end
+
+
+----------------------------------------------------------------------------------------------------
+
+
+local formula_context =
+{
+    i = 0,
+    x = 0,
+    h = {},
+
+}
+setmetatable(formula_context, {__index = math})
 
 
 ----------------------------------------------------------------------------------------------------
@@ -1049,298 +1070,131 @@ function PadSynthWindow:gui ()
 
             vb:horizontal_aligner
             {
-                mode = "justify",
+                mode = "left",
+                spacing = dialog_spacing,
 
-                vb:row
+                vb:button
                 {
-                    spacing = dialog_spacing,
+                    text = "Apply formula:",
 
-                    vb:button
-                    {
-                        text = "Clear",
-                        notifier = function ()
+                    notifier =
+                        function()
+                            vb.views.formula_error.text = ""
+                            local formula, err = loadstring(vb.views.formula_string.value)
+                            if formula == nil then
+                                vb.views.formula_error.text = "ERROR: " .. err
+                                return
+                            end
+                            setfenv(formula, formula_context)
+                            formula_context.h = self.harmonics
+                            formula_context.maximum = math.max(unpack(self.harmonics))
                             for i = 1, 256 do
-                                self.harmonics[i] = 0
+                                self.temp_harmonics[i] = self.harmonics[i]
+                                formula_context.i = i
+                                formula_context.x = (i - 1) / 255
+                                local status, val = xpcall(formula, 
+                                    function(err) 
+                                        vb.views.formula_error.text = "ERROR: " .. err 
+                                    end
+                                )
+                                if status and type(val) ~= "number" then
+                                    vb.views.formula_error.text = "ERROR: The formula returns " .. type(h) .. " instead of a number"
+                                    return
+                                end
+                                if status then
+                                    self.temp_harmonics[i] = val
+                                end
                             end
-                            self:update_harmonics_sliders ()
-                        end
-                    },
-
-                    vb:button
-                    {
-                        text = "+ Saw",
-                        notifier = function ()
                             for i = 1, 256 do
-                                local h = self.harmonics[i]
-                                h = h + 1 / i
-                                if h > 1 then h = 1 end
-                                self.harmonics[i] = h
+                                self.harmonics[i] = self.temp_harmonics[i]
+                                if self.harmonics[i] > 1 then self.harmonics[i] = 1 end
+                                if self.harmonics[i] < 0 then self.harmonics[i] = 0 end
                             end
                             self:update_harmonics_sliders ()
                         end
-                    },
-
-                    vb:button
-                    {
-                        text = "- Saw",
-                        notifier = function ()
-                            for i = 1, 64 do
-                                local h = lin_to_ln (vb.views["H" .. i].value)
-                                h = h - 1 / i
-                                if h < 0 then h = 0 end
-                                vb.views["H" .. i].value = ln_to_lin (h)
-                            end
-                        end
-                    },
-
-                    vb:button
-                    {
-                        text = "+ Square",
-                        notifier = function ()
-                            for i = 1, 64 do
-                                local h = lin_to_ln (vb.views["H" .. i].value)
-                                if i % 2 ~= 0 then
-                                    h = h + 1 / i
-                                end
-                                if h > 1 then h = 1 end
-                                vb.views["H" .. i].value = ln_to_lin (h)
-                            end
-                        end
-                    },
-
-                    vb:button
-                    {
-                        text = "- Square",
-                        notifier = function ()
-                            for i = 1, 64 do
-                                local h = lin_to_ln (vb.views["H" .. i].value)
-                                if i % 2 ~= 0 then
-                                    h = h - 1 / i
-                                end
-                                if h < 0 then h = 0 end
-                                vb.views["H" .. i].value = ln_to_lin (h)
-                            end
-                        end
-                    },
-
-                    vb:button
-                    {
-                        text = "+ Soft Saw",
-                        notifier = function ()
-                            for i = 1, 64 do
-                                local h = lin_to_ln (vb.views["H" .. i].value)
-                                h = h + 1 / (i * i)
-                                if h > 1 then h = 1 end
-                                vb.views["H" .. i].value = ln_to_lin (h)
-                            end
-                        end
-                    },
-
-                    vb:button
-                    {
-                        text = "- Soft Saw",
-                        notifier = function ()
-                            for i = 1, 64 do
-                                local h = lin_to_ln (vb.views["H" .. i].value)
-                                h = h - 1 / (i * i)
-                                if h < 0 then h = 0 end
-                                vb.views["H" .. i].value = ln_to_lin (h)
-                            end
-                        end
-                    },
-
-                    vb:button
-                    {
-                        text = "+ Triangle",
-                        notifier = function ()
-                            for i = 1, 64 do
-                                local h = lin_to_ln ((vb.views["H" .. i].value))
-                                if i % 2 ~= 0 then
-                                    h = h + 1 / (i * i)
-                                end
-                                if h > 1 then h = 1 end
-                                vb.views["H" .. i].value = ln_to_lin (h)
-                            end
-                        end
-                    },
-
-                    vb:button
-                    {
-                        text = "- Triangle",
-                        notifier = function ()
-                            for i = 1, 64 do
-                                local h = lin_to_ln ((vb.views["H" .. i].value))
-                                if i % 2 ~= 0 then
-                                    h = h - 1 / (i * i)
-                                end
-                                if h < 0 then h = 0 end
-                                vb.views["H" .. i].value = ln_to_lin (h)
-                            end
-                        end
-                    },
-
-                    vb:button
-                    {
-                        text = "+ Circle",
-                        notifier = function ()
-                            for i = 1, 64 do
-                                local h = lin_to_ln (vb.views["H" .. i].value)
-                                if i <= 8 then
-                                    h = h + math.cos ((i / 8) * math.pi / 2)
-                                end
-                                if h > 1 then h = 1 end
-                                vb.views["H" .. i].value = ln_to_lin (h)
-                            end
-                        end
-                    },
-
-                    vb:button
-                    {
-                        text = "- Circle",
-                        notifier = function ()
-                            for i = 1, 64 do
-                                local h = lin_to_ln (vb.views["H" .. i].value)
-                                if i <= 8 then
-                                    h = h - math.cos ((i / 8) * math.pi / 2)
-                                end
-                                if h < 0 then h = 0 end
-                                vb.views["H" .. i].value = ln_to_lin (h)
-                            end
-                        end
-                    },
-
-                    vb:button
-                    {
-                        text = "<< Shift",
-                        notifier = function ()
-                            for i = 2, 256 do
-                                self.harmonics[i - 1] = self.harmonics[i]
-                            end
-                            self.harmonics[256] = 0
-                            self:update_harmonics_sliders ()
-                        end
-                    },
-
-                    vb:button
-                    {
-                        text = "Shift >>",
-                        notifier = function ()
-                            for i = 256, 2, -1 do
-                                self.harmonics[i] = self.harmonics[i - 1]
-                            end
-                            self.harmonics[1] = 0
-                            self:update_harmonics_sliders ()
-                        end
-                    },
-
-
                 },
 
-                vb:row
+                vb:textfield
                 {
-                    spacing = control_spacing,
-
-                    vb:text { text = "Modify" },
-
-                    vb:popup
-                    {
-                        id = "modify_function",
-                        items = { "Set to", "Add", "Sub", "Multiply", "Divide", "Set to random", "Add random", "Sub random", "Add/sub random" },
-                        width = 100,
-                    },
-
-                    vb:text { text = "start: " },
-
-                    vb:valuefield
-                    {
-                        id = "modify_start_value",
-                        align = "right",
-                        min = 0, max = 100,
-                        value = 100,
-                        width = 40,
-                        tonumber = tonumber,
-                        tostring = tostring,
-                    },
-
-                    vb:text { text = "end: " },
-
-                    vb:valuefield
-                    {
-                        id = "modify_end_value",
-                        align = "right",
-                        min = 0, max = 100,
-                        value = 0,
-                        width = 40,
-                        tonumber = tonumber,
-                        tostring = tostring,
-                    },
-
-                    vb:button
-                    {
-                        text = "Apply",
-                        notifier = function ()
-
-                            local func = vb.views.modify_function.value
-                            local start_value = vb.views.modify_start_value.value
-                            local end_value = vb.views.modify_end_value.value
-                            local value = function(i) return start_value + ((i - 1) / 255) * (end_value - start_value) end
-
-                            if func == 1 then
-                                for i = 1, 256 do
-                                    self.harmonics[i] = value(i) / 100
-                                end
-                            elseif func == 2 then
-                                for i = 1, 256 do
-                                    self.harmonics[i] = self.harmonics[i] + value(i) / 100
-                                    if self.harmonics[i] > 1 then self.harmonics[i] = 1 end
-                                end
-                            elseif func == 3 then
-                                for i = 1, 256 do
-                                    self.harmonics[i] = self.harmonics[i] - value(i) / 100
-                                    if self.harmonics[i] < 0 then self.harmonics[i] = 0 end
-                                end
-                            elseif func == 4 then
-                                for i = 1, 256 do
-                                    self.harmonics[i] = self.harmonics[i] * value(i)
-                                    if self.harmonics[i] > 1 then self.harmonics[i] = 1 end
-                                end
-                            elseif func == 5 then
-                                for i = 1, 256 do
-                                    self.harmonics[i] = self.harmonics[i] / value(i)
-                                    if self.harmonics[i] < 0 then self.harmonics[i] = 0 end
-                                end
-                            elseif func == 6 then
-                                for i = 1, 256 do
-                                    self.harmonics[i] = math.random() * value(i) / 100
-                                    if self.harmonics[i] > 1 then self.harmonics[i] = 1 end
-                                    if self.harmonics[i] < 0 then self.harmonics[i] = 0 end
-                                end
-                            elseif func == 7 then
-                                for i = 1, 256 do
-                                    self.harmonics[i] = self.harmonics[i] + math.random() * value(i) / 100
-                                    if self.harmonics[i] > 1 then self.harmonics[i] = 1 end
-                                    if self.harmonics[i] < 0 then self.harmonics[i] = 0 end
-                                end
-                            elseif func == 8 then
-                                for i = 1, 256 do
-                                    self.harmonics[i] = self.harmonics[i] - math.random() * value(i) / 100
-                                    if self.harmonics[i] > 1 then self.harmonics[i] = 1 end
-                                    if self.harmonics[i] < 0 then self.harmonics[i] = 0 end
-                                end
-                            elseif func == 9 then
-                                for i = 1, 256 do
-                                    self.harmonics[i] = self.harmonics[i] + (2 * math.random() - 1) * value(i) / 100
-                                    if self.harmonics[i] > 1 then self.harmonics[i] = 1 end
-                                    if self.harmonics[i] < 0 then self.harmonics[i] = 0 end
-                                end
+                    id = "formula_string",
+                    width = 800,
+                    text = "if i == 1 then return 1 else return 0 end",
+                    notifier =
+                        function()
+                            if not self.formula_preset_choice then
+                                self.formula_custom_string = vb.views.formula_string.text
+                                vb.views.formula_presets.value = 1
                             end
-
-                            self:update_harmonics_sliders ()
-
-                        end,
-                    },
+                        end
                 },
 
+            },
+            vb:horizontal_aligner
+            {
+                spacing = dialog_spacing,
+
+                vb:text
+                {
+                    text = "Presets:"
+                }, 
+                vb:popup
+                {
+                    id = "formula_presets",
+                    items = { "Custom", "Pure Tone", "Saw", "Square", "Soft Saw", "Triangle", "Circle", "Random", "Random (Decreasing)", "Random Saw", "Random Square", "Mult. by Saw", "Add 1/2 Randomness", "Add 1/4 Randomness", "Randomize", "Shift Left", "Shift Right", "Normalize"  },
+                    value = 2,
+                    width = 150,
+                    notifier = 
+                        function(choice)
+                            self.formula_preset_choice = true
+                            local items = vb.views.formula_presets.items
+                            if items[choice] == "Custom" then
+                                vb.views.formula_string.text = self.formula_custom_string
+                            elseif items[choice] == "Pure Tone" then
+                                vb.views.formula_string.text = "if i == 1 then return 1 else return 0 end"
+                            elseif items[choice] == "Saw" then
+                                vb.views.formula_string.text = "return 1 / i"
+                            elseif items[choice] == "Square" then
+                                vb.views.formula_string.text = "if i % 2 ~= 0 then return 1 / i else return 0 end"
+                            elseif items[choice] == "Soft Saw" then
+                                vb.views.formula_string.text = "return 1 / (i * i)"
+                            elseif items[choice] == "Triangle" then
+                                vb.views.formula_string.text = "if i % 2 ~= 0 then return 1 / (i * i) else return 0 end"
+                            elseif items[choice] == "Circle" then
+                                vb.views.formula_string.text = "if i < 8 then return cos((i / 8) * pi/2) else return 0 end"
+                            elseif items[choice] == "Random" then
+                                vb.views.formula_string.text = "return random()"
+                            elseif items[choice] == "Random (Decreasing)" then
+                                vb.views.formula_string.text = "return (1 - x) * random()"
+                            elseif items[choice] == "Random Saw" then
+                                vb.views.formula_string.text = "return random() / i"
+                            elseif items[choice] == "Random Square" then
+                                vb.views.formula_string.text = "if i % 2 ~= 0 then return random() / i else return 0 end"
+                            elseif items[choice] == "Mult. by Saw" then
+                                vb.views.formula_string.text = "return h[i] / i"
+                            elseif items[choice] == "Add 1/2 Randomness" then
+                                vb.views.formula_string.text = "return h[i] / 2 + random() / 2"
+                            elseif items[choice] == "Add 1/4 Randomness" then
+                                vb.views.formula_string.text = "return h[i] * (3 / 4) + random() / 4"
+                            elseif items[choice] == "Randomize" then
+                                vb.views.formula_string.text = "y = h[i]; return y - (y / 8) + (y / 4) * random()"
+                            elseif items[choice] == "Shift Left" then
+                                vb.views.formula_string.text = "if i < 256 then return h[i+1] else return 0 end"
+                            elseif items[choice] == "Shift Right" then
+                                vb.views.formula_string.text = "if i > 1 then return h[i-1] else return 0 end"
+                            elseif items[choice] == "Normalize" then
+                                vb.views.formula_string.text = "return h[i] / maximum"
+                            end
+                            self.formula_preset_choice = false
+                        end
+                },
+
+                vb:text
+                {
+                    id = "formula_error",
+                    width = 400,
+                    text = "",
+                    style = "strong",
+                },
             },
         },
 
