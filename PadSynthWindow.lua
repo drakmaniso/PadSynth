@@ -1245,16 +1245,31 @@ function PadSynthWindow:gui ()
                     vb:popup
                     {
                         id = "modify_function",
-                        items = { "Set", "Add", "Sub", "Multiply", "Divide" },
-                        width = 60,
+                        items = { "Set to", "Add", "Sub", "Multiply", "Divide", "Set to random", "Add random", "Sub random", "Add/sub random" },
+                        width = 100,
                     },
+
+                    vb:text { text = "start: " },
 
                     vb:valuefield
                     {
-                        id = "modify_value",
+                        id = "modify_start_value",
                         align = "right",
                         min = 0, max = 100,
-                        value = 2,
+                        value = 100,
+                        width = 40,
+                        tonumber = tonumber,
+                        tostring = tostring,
+                    },
+
+                    vb:text { text = "end: " },
+
+                    vb:valuefield
+                    {
+                        id = "modify_end_value",
+                        align = "right",
+                        min = 0, max = 100,
+                        value = 0,
                         width = 40,
                         tonumber = tonumber,
                         tostring = tostring,
@@ -1266,30 +1281,56 @@ function PadSynthWindow:gui ()
                         notifier = function ()
 
                             local func = vb.views.modify_function.value
-                            local value = vb.views.modify_value.value
+                            local start_value = vb.views.modify_start_value.value
+                            local end_value = vb.views.modify_end_value.value
+                            local value = function(i) return start_value + ((i - 1) / 255) * (end_value - start_value) end
 
                             if func == 1 then
                                 for i = 1, 256 do
-                                    self.harmonics[i] = value / 100
+                                    self.harmonics[i] = value(i) / 100
                                 end
                             elseif func == 2 then
                                 for i = 1, 256 do
-                                    self.harmonics[i] = self.harmonics[i] + value / 100
+                                    self.harmonics[i] = self.harmonics[i] + value(i) / 100
                                     if self.harmonics[i] > 1 then self.harmonics[i] = 1 end
                                 end
                             elseif func == 3 then
                                 for i = 1, 256 do
-                                    self.harmonics[i] = self.harmonics[i] - value / 100
+                                    self.harmonics[i] = self.harmonics[i] - value(i) / 100
                                     if self.harmonics[i] < 0 then self.harmonics[i] = 0 end
                                 end
                             elseif func == 4 then
                                 for i = 1, 256 do
-                                    self.harmonics[i] = self.harmonics[i] * value
+                                    self.harmonics[i] = self.harmonics[i] * value(i)
                                     if self.harmonics[i] > 1 then self.harmonics[i] = 1 end
                                 end
                             elseif func == 5 then
                                 for i = 1, 256 do
-                                    self.harmonics[i] = self.harmonics[i] / value
+                                    self.harmonics[i] = self.harmonics[i] / value(i)
+                                    if self.harmonics[i] < 0 then self.harmonics[i] = 0 end
+                                end
+                            elseif func == 6 then
+                                for i = 1, 256 do
+                                    self.harmonics[i] = math.random() * value(i) / 100
+                                    if self.harmonics[i] > 1 then self.harmonics[i] = 1 end
+                                    if self.harmonics[i] < 0 then self.harmonics[i] = 0 end
+                                end
+                            elseif func == 7 then
+                                for i = 1, 256 do
+                                    self.harmonics[i] = self.harmonics[i] + math.random() * value(i) / 100
+                                    if self.harmonics[i] > 1 then self.harmonics[i] = 1 end
+                                    if self.harmonics[i] < 0 then self.harmonics[i] = 0 end
+                                end
+                            elseif func == 8 then
+                                for i = 1, 256 do
+                                    self.harmonics[i] = self.harmonics[i] - math.random() * value(i) / 100
+                                    if self.harmonics[i] > 1 then self.harmonics[i] = 1 end
+                                    if self.harmonics[i] < 0 then self.harmonics[i] = 0 end
+                                end
+                            elseif func == 9 then
+                                for i = 1, 256 do
+                                    self.harmonics[i] = self.harmonics[i] + (2 * math.random() - 1) * value(i) / 100
+                                    if self.harmonics[i] > 1 then self.harmonics[i] = 1 end
                                     if self.harmonics[i] < 0 then self.harmonics[i] = 0 end
                                 end
                             end
