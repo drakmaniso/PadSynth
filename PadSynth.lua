@@ -676,6 +676,9 @@ function PadSynth:initialize_parameters ()
     self.formula_preset = 4
     self.formula_string = "return 1 / i"
     self.formula_randomness = 0
+    self.formula_curvature = 0
+    self.formula_torsion = 0
+    self.formula_shape = 0
 
 end
 
@@ -754,6 +757,9 @@ function PadSynth:save_parameters ()
     name = name .. "formula_preset=" .. self.formula_preset .. ", "
     name = name .. "formula_string=\"" .. self.formula_string .. "\", "
     name = name .. "formula_randomness=" .. self.formula_randomness .. ", "
+    name = name .. "formula_curvature=" .. self.formula_curvature .. ", "
+    name = name .. "formula_torsion=" .. self.formula_torsion .. ", "
+    name = name .. "formula_shape=" .. self.formula_shape .. ", "
 
     self.instrument.samples[index].name = name .. "}"
 
@@ -838,6 +844,9 @@ function PadSynth:load_parameters ()
     self.formula_preset = data.formula_preset
     self.formula_string = data.formula_string
     self.formula_randomness = data.formula_randomness
+    self.formula_curvature = data.formula_curvature
+    self.formula_torsion = data.formula_torsion
+    self.formula_shape = data.formula_shape
 
     if self.version == 0 then
         self.bandwidth_growth = 1

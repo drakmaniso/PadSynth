@@ -24,6 +24,9 @@ function PadSynthWindow:__init (pad_synth)
     self.formula_preset = pad_synth.formula_preset
     self.formula_custom_string = pad_synth.formula_custom_string
     self.formula_randomness = pad_synth.formula_randomness
+    self.formula_curvature = pad_synth.formula_curvature
+    self.formula_torsion = pad_synth.formula_torsion
+    self.formula_shape = pad_synth.formula_shape
 
     self.formula_preset_choice = false
 
@@ -220,6 +223,9 @@ function PadSynthWindow:update_parameters ()
     self.pad_synth.formula_preset = views.formula_presets.value
     self.pad_synth.formula_string = views.formula_string.value
     self.pad_synth.formula_randomness = views.formula_randomness.value
+    self.pad_synth.formula_curvature = views.formula_curvature.value
+    self.pad_synth.formula_torsion = views.formula_torsion.value
+    self.pad_synth.formula_shape = views.formula_shape.value
 
 end
 
@@ -1084,7 +1090,11 @@ function PadSynthWindow:gui ()
             {
                 id = "harmonics_group",
                 mode = "distribute",
+                spacing = 0,
             },
+
+
+        -- Formula ---------------------------------------------------------------------------------------------------------------------------------
 
             vb:horizontal_aligner
             {
@@ -1168,6 +1178,9 @@ function PadSynthWindow:gui ()
                 },
             },
 
+
+        -- Curve ---------------------------------------------------------------------------------------------------------------------------------
+
             vb:horizontal_aligner
             {
                 spacing = dialog_spacing,
@@ -1215,7 +1228,7 @@ function PadSynthWindow:gui ()
                             end
                     },
                 },
-                
+
                 vb:row
                 {
                     vb:vertical_aligner
@@ -1228,10 +1241,54 @@ function PadSynthWindow:gui ()
                     },
                     vb:rotary
                     {
+                        id = "formula_curvature",
                         min = -1,
                         max = 1,
+                        value = ps.formula_curvature,
+                        notifier = function() self:apply_formula() end,
                     },
                 },
+
+                vb:row
+                {
+                    vb:vertical_aligner
+                    {
+                        mode = "center",
+                        vb:text
+                        {
+                            text = "Torsion: "
+                        },
+                    },
+                    vb:rotary
+                    {
+                        id = "formula_torsion",
+                        min = 0,
+                        max = 2,
+                        value = ps.formula_torsion,
+                        notifier = function() self:apply_formula() end,
+                    },
+                },
+
+                vb:row
+                {
+                    vb:vertical_aligner
+                    {
+                        mode = "center",
+                        vb:text
+                        {
+                            text = "Curve character: "
+                        },
+                    },
+                    vb:rotary
+                    {
+                        id = "formula_shape",
+                        min = -1,
+                        max = 1,
+                        value = ps.formula_shape,
+                        notifier = function() self:apply_formula() end,
+                    },
+                },
+
             },
 
         },
@@ -1277,12 +1334,13 @@ function PadSynthWindow:gui ()
     }
 
     for i = 1, 64 do
-        vb.views.harmonics_group:add_child (vb:column
+        vb.views.harmonics_group:add_child (
+            vb:column
                 {
                     uniform = true,
-                    width = 12,
+                    width = 10,
                     spacing = 0,
-                    vb:text { id = "harmonic_label_top_" .. i, text = tostring(i), width = 16, align = "center" },
+                    vb:text { id = "harmonic_label_top_" .. i, text = tostring(i), width = 4, align = "center" },
                     vb:horizontal_aligner
                     {
                         mode = "center",
@@ -1303,8 +1361,9 @@ function PadSynthWindow:gui ()
                             end
                         },
                     },
-                    vb:text { id = "harmonic_label_bottom_" .. i, text = tostring(i), width = 16, align = "center" },
-                } )
+                    vb:text { id = "harmonic_label_bottom_" .. i, text = tostring(i), width = 4, align = "center" },
+                } 
+            )
     end
     self:update_harmonics_sliders ()
 
@@ -1356,9 +1415,9 @@ function PadSynthWindow:apply_formula ()
         end
         if status then
             local randomness = vb.views.formula_randomness.value
-            self.harmonics[i] = val * (1 + randomness * self.random_part[i])
-            if self.harmonics[i] > 1 then self.harmonics[i] = 1 end
-            if self.harmonics[i] < 0 then self.harmonics[i] = 0 end
+            val = val * (1 + randomness * self.random_part[i])
+            val = curve(val, vb.views.formula_shape.value, vb.views.formula_torsion.value, vb.views.formula_curvature.value)
+            self.harmonics[i] = clamp(val, 0.0, 1.0)
         end
     end
     self:update_harmonics_sliders ()
