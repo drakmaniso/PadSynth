@@ -563,6 +563,7 @@ function PadSynth:create_sample (wavetable, note, range)
         sample.interpolation_mode = renoise.Sample.INTERPOLATE_NONE
     end
     sample.oversample_enabled = self.oversample_enabled
+    sample.loop_mode = renoise.SampleEnvelopeModulationDevice.LOOP_MODE_FORWARD
 
     return index
 
