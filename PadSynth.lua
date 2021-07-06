@@ -663,7 +663,19 @@ function PadSynth:initialize_parameters ()
 
     self.base_function = 1
 
-    self.harmonics = { 1 }
+    self.harmonics = { }
+    for i = 1, 256 do
+        self.harmonics[i] = 1 / i
+    end
+
+    self.random_part = { }
+    for i = 1, 256 do
+        self.random_part[i] = 1 / i
+    end
+
+    self.formula_preset = 1
+    self.formula_custom_string = "return 1 / i"
+    self.formula_randomness = 0
 
 end
 
@@ -731,7 +743,17 @@ function PadSynth:save_parameters ()
     for i = 1, #self.harmonics do
         name = name .. self.harmonics[i] .. ", "
     end
-    name = name .. "} "
+    name = name .. "}, "
+
+    name = name .. "random_part={ "
+    for i = 1, #self.random_part do
+        name = name .. self.random_part[i] .. ", "
+    end
+    name = name .. "}, "
+
+    name = name .. "formula_preset=" .. self.formula_preset .. ", "
+    name = name .. "formula_custom_string=\"" .. self.formula_custom_string .. "\", "
+    name = name .. "formula_randomness=" .. self.formula_randomness .. ", "
 
     self.instrument.samples[index].name = name .. "}"
 
@@ -762,9 +784,12 @@ function PadSynth:load_parameters ()
 
     local data_string = "return" .. string.sub (name, 20)
 
-    local f = loadstring (data_string)
+    local f, err = loadstring (data_string)
+    if f == nil then
+        error(err)
+    end
 
-    local data = f ()
+    local data = assert(f ())
 
     self.version = data.version
     self.volume = data.volume
@@ -808,6 +833,11 @@ function PadSynth:load_parameters ()
     self.base_function = data.base_function
 
     self.harmonics = data.harmonics
+    self.random_part = data.random_part
+
+    self.formula_preset = data.formula_preset
+    self.formula_custom_string = data.formula_custom_string
+    self.formula_randomness = data.formula_randomness
 
     if self.version == 0 then
         self.bandwidth_growth = 1

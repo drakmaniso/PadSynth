@@ -13,16 +13,24 @@ function PadSynthWindow:__init (pad_synth)
 
     self.harmonics = {}
     self.temp_harmonics = {}
+    self.random_part = {}
     for i = 1, 256 do 
         self.harmonics[i] = 0
         self.temp_harmonics[i] = 0
+        self.random_part[i] = math.random()
     end
     for i, v in ipairs (pad_synth.harmonics) do
         self.harmonics[i] = v
         self.temp_harmonics[i] = v
     end
+    for i, v in ipairs (pad_synth.random_part) do
+        self.random_part[i] = v
+    end
 
-    self.formula_custom_string = ""
+    self.formula_preset = pad_synth.formula_preset
+    self.formula_custom_string = pad_synth.formula_custom_string
+    self.formula_randomness = pad_synth.formula_randomness
+
     self.formula_preset_choice = false
 
 end
@@ -209,6 +217,15 @@ function PadSynthWindow:update_parameters ()
     for i = 1, 256 do
         self.pad_synth.harmonics[i] = self.harmonics[i] -- lin_to_ln (views["H" .. i].value)
     end
+
+    self.pad_synth.random_part = { }
+    for i = 1, 256 do
+        self.pad_synth.random_part[i] = self.random_part[i]
+    end
+
+    self.pad_synth.formula_preset = views.formula_presets.value
+    self.pad_synth.formula_custom_string = self.formula_custom_string
+    self.pad_synth.formula_randomness = views.formula_randomness.value
 
 end
 
@@ -1073,86 +1090,26 @@ function PadSynthWindow:gui ()
                 mode = "left",
                 spacing = dialog_spacing,
 
-                vb:button
-                {
-                    text = "Apply formula:",
-
-                    notifier =
-                        function()
-                            vb.views.formula_error.text = ""
-                            local formula, err = loadstring(vb.views.formula_string.value)
-                            if formula == nil then
-                                vb.views.formula_error.text = "ERROR: " .. err
-                                return
-                            end
-                            setfenv(formula, formula_context)
-                            formula_context.h = self.harmonics
-                            formula_context.maximum = math.max(unpack(self.harmonics))
-                            for i = 1, 256 do
-                                self.temp_harmonics[i] = self.harmonics[i]
-                                formula_context.i = i
-                                formula_context.x = (i - 1) / 255
-                                local status, val = xpcall(formula, 
-                                    function(err) 
-                                        vb.views.formula_error.text = "ERROR: " .. err 
-                                    end
-                                )
-                                if status and type(val) ~= "number" then
-                                    vb.views.formula_error.text = "ERROR: The formula returns " .. type(h) .. " instead of a number"
-                                    return
-                                end
-                                if status then
-                                    self.temp_harmonics[i] = val
-                                end
-                            end
-                            for i = 1, 256 do
-                                self.harmonics[i] = self.temp_harmonics[i]
-                                if self.harmonics[i] > 1 then self.harmonics[i] = 1 end
-                                if self.harmonics[i] < 0 then self.harmonics[i] = 0 end
-                            end
-                            self:update_harmonics_sliders ()
-                        end
-                },
-
-                vb:textfield
-                {
-                    id = "formula_string",
-                    width = 800,
-                    text = "if i == 1 then return 1 else return 0 end",
-                    notifier =
-                        function()
-                            if not self.formula_preset_choice then
-                                self.formula_custom_string = vb.views.formula_string.text
-                                vb.views.formula_presets.value = 1
-                            end
-                        end
-                },
-
-            },
-            vb:horizontal_aligner
-            {
-                spacing = dialog_spacing,
-
-                vb:text
-                {
-                    text = "Presets:"
-                }, 
                 vb:popup
                 {
                     id = "formula_presets",
-                    items = { "Custom", "Pure Tone", "Saw", "Square", "Soft Saw", "Triangle", "Circle", "Random", "Random (Decreasing)", "Random Saw", "Random Square", "Mult. by Saw", "Add 1/2 Randomness", "Add 1/4 Randomness", "Randomize", "Shift Left", "Shift Right", "Normalize"  },
-                    value = 2,
+                    items = { "Custom Formula", "Fundamental Only", "All Harmonics", "Linear Ramp", "Saw", "Square", "Soft Saw", "Triangle", "Circle", "Random", "Multiply by Saw", "Multiply by Square" , "Shift Left", "Shift Right", "Normalize"  },
+                    value = ps.formula_preset,
                     width = 150,
                     notifier = 
                         function(choice)
                             self.formula_preset_choice = true
                             local items = vb.views.formula_presets.items
-                            if items[choice] == "Custom" then
+                            if items[choice] == "Custom Formula" then
                                 vb.views.formula_string.text = self.formula_custom_string
-                            elseif items[choice] == "Pure Tone" then
+                            elseif items[choice] == "Fundamental Only" then
                                 vb.views.formula_string.text = "if i == 1 then return 1 else return 0 end"
+                            elseif items[choice] == "All Harmonics" then
+                                vb.views.formula_string.text = "return 1"
                             elseif items[choice] == "Saw" then
                                 vb.views.formula_string.text = "return 1 / i"
+                            elseif items[choice] == "Linear Ramp" then
+                                vb.views.formula_string.text = "return 1 - x"
                             elseif items[choice] == "Square" then
                                 vb.views.formula_string.text = "if i % 2 ~= 0 then return 1 / i else return 0 end"
                             elseif items[choice] == "Soft Saw" then
@@ -1163,20 +1120,10 @@ function PadSynthWindow:gui ()
                                 vb.views.formula_string.text = "if i < 8 then return cos((i / 8) * pi/2) else return 0 end"
                             elseif items[choice] == "Random" then
                                 vb.views.formula_string.text = "return random()"
-                            elseif items[choice] == "Random (Decreasing)" then
-                                vb.views.formula_string.text = "return (1 - x) * random()"
-                            elseif items[choice] == "Random Saw" then
-                                vb.views.formula_string.text = "return random() / i"
-                            elseif items[choice] == "Random Square" then
-                                vb.views.formula_string.text = "if i % 2 ~= 0 then return random() / i else return 0 end"
-                            elseif items[choice] == "Mult. by Saw" then
+                            elseif items[choice] == "Multiply by Saw" then
                                 vb.views.formula_string.text = "return h[i] / i"
-                            elseif items[choice] == "Add 1/2 Randomness" then
-                                vb.views.formula_string.text = "return h[i] / 2 + random() / 2"
-                            elseif items[choice] == "Add 1/4 Randomness" then
-                                vb.views.formula_string.text = "return h[i] * (3 / 4) + random() / 4"
-                            elseif items[choice] == "Randomize" then
-                                vb.views.formula_string.text = "y = h[i]; return y - (y / 8) + (y / 4) * random()"
+                            elseif items[choice] == "Multiply by Square" then
+                                vb.views.formula_string.text = "if i % 2 ~= 0 then return h[i] / i else return 0 end"
                             elseif items[choice] == "Shift Left" then
                                 vb.views.formula_string.text = "if i < 256 then return h[i+1] else return 0 end"
                             elseif items[choice] == "Shift Right" then
@@ -1185,17 +1132,123 @@ function PadSynthWindow:gui ()
                                 vb.views.formula_string.text = "return h[i] / maximum"
                             end
                             self.formula_preset_choice = false
+                            self:apply_formula()
                         end
+                },
+
+                vb:textfield
+                {
+                    id = "formula_string",
+                    width = 800,
+                    text = ps.formula_custom_string,
+                    notifier =
+                        function()
+                            if not self.formula_preset_choice then
+                                self.formula_custom_string = vb.views.formula_string.text
+                                if vb.views.formula_presets.value ~= 1 then
+                                    vb.views.formula_presets.value = 1 -- this will automatically trigger apply_formula
+                                else
+                                    self:apply_formula()
+                                end
+                            end
+                        end
+                },
+
+                vb:button
+                {
+                    id = "formula_apply",
+
+                    text = " Re-Apply Formula ",
+
+                    notifier = function() self:apply_formula() end
+                },
+
+            },
+
+            vb:horizontal_aligner
+            {
+                spacing = dialog_spacing,
+
+                vb:space
+                {
+                    width = 150,
                 },
 
                 vb:text
                 {
                     id = "formula_error",
-                    width = 400,
+                    width = 800,
                     text = "",
                     style = "strong",
                 },
             },
+
+            vb:horizontal_aligner
+            {
+                spacing = dialog_spacing,
+
+                vb:space
+                {
+                    width = 150,
+                },
+                
+                vb:row
+                {
+                    vb:vertical_aligner
+                    {
+                        mode = "center",
+                        vb:text
+                        {
+                            text = "Randomness: "
+                        },
+                    },
+                    vb:rotary
+                    {
+                        id = "formula_randomness",
+                        value = ps.formula_randomness,
+                        min = 0,
+                        max = 1,
+                        notifier =
+                            function()
+                                self:apply_formula()
+                            end
+                    },
+                },
+
+                vb:vertical_aligner
+                {
+                    mode = "center",
+                    vb:button
+                    {
+                        text = "Re-Roll",
+                        notifier =
+                            function()
+                                for i = 1, 256 do
+                                    self.random_part[i] = math.random()
+                                end
+                                self:apply_formula()
+                            end
+                    },
+                },
+                
+                vb:row
+                {
+                    vb:vertical_aligner
+                    {
+                        mode = "center",
+                        vb:text
+                        {
+                            text = "Curvature: "
+                        },
+                    },
+                    vb:rotary
+                    {
+                        min = -1,
+                        max = 1,
+                    },
+                },
+            },
+
         },
 
 
@@ -1282,6 +1335,54 @@ end
 
 
 ----------------------------------------------------------------------------------------------------
+
+function PadSynthWindow:apply_formula ()
+    local vb = self.vb
+
+    vb.views.formula_error.text = ""
+    local formula, err = loadstring(vb.views.formula_string.value)
+    if formula == nil then
+        vb.views.formula_error.text = "ERROR: " .. err
+        return
+    end
+    setfenv(formula, formula_context)
+    formula_context.h = self.harmonics
+    formula_context.maximum = math.max(unpack(self.harmonics))
+    for i = 1, 256 do
+        self.temp_harmonics[i] = self.harmonics[i]
+        formula_context.i = i
+        formula_context.x = (i - 1) / 255
+        formula_context.random = 
+            function(m, n) 
+                if m == nil then
+                    return self.random_part[i] 
+                elseif n == nil then
+                    return 1 + math.floor(0.5 + (m - 1) * self.random_part[i])
+                else
+                    return n + math.floor(0.5 + (m - n) * self.random_part[i])
+                end
+            end
+        local status, val = xpcall(formula, 
+            function(err) 
+                vb.views.formula_error.text = "ERROR: " .. err 
+            end
+        )
+        if status and type(val) ~= "number" then
+            vb.views.formula_error.text = "ERROR: The formula returns " .. type(val) .. " instead of a number"
+            return
+        end
+        if status then
+            local randomness = vb.views.formula_randomness.value
+            self.temp_harmonics[i] = val * (1 - randomness  + randomness * self.random_part[i])
+        end
+    end
+    for i = 1, 256 do
+        self.harmonics[i] = self.temp_harmonics[i]
+        if self.harmonics[i] > 1 then self.harmonics[i] = 1 end
+        if self.harmonics[i] < 0 then self.harmonics[i] = 0 end
+    end
+    self:update_harmonics_sliders ()
+end
 
 
 function PadSynthWindow:update_harmonics_sliders ()
