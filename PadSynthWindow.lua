@@ -16,13 +16,12 @@ function PadSynthWindow:__init (pad_synth)
         self.harmonics[i] = v
     end
 
-    self.random_part = {}
-    for i, v in ipairs (pad_synth.random_part) do
-        self.random_part[i] = v
+    self.harmonics_output = {}
+    for i, v in ipairs (pad_synth.harmonics_output) do
+        self.harmonics_output[i] = v
     end
 
     self.formula_custom_string = pad_synth.formula_custom_string
-    self.formula_randomness = pad_synth.formula_randomness
     self.formula_curvature = pad_synth.formula_curvature
     self.formula_torsion = pad_synth.formula_torsion
     self.formula_shape = pad_synth.formula_shape
@@ -30,6 +29,94 @@ function PadSynthWindow:__init (pad_synth)
     self.formula_preset_choice = false
 
 end
+
+
+----------------------------------------------------------------------------------------------------
+
+
+function PadSynthWindow:update_parameters ()
+
+    local views = self.vb.views
+
+    self.pad_synth.volume = views.volume.value
+    self.pad_synth.sample_duration = views.duration.value
+    self.pad_synth.nb_channels = views.nb_channels.value
+
+    self.pad_synth.autofade = views.autofade.value
+    self.pad_synth.new_note_action = views.new_note_action.value
+    self.pad_synth.interpolation = views.interpolation.value
+    self.pad_synth.oversample_enabled = views.oversample_enabled.value
+
+    self.pad_synth.overtones_placement = views.overtones_placement.value
+    self.pad_synth.overtones_treshold = views.overtones_treshold.value
+    self.pad_synth.overtones_amount = views.overtones_amount.value
+    self.pad_synth.overtones_harmonize = views.overtones_harmonize.value
+    self.pad_synth.overtones_param1 = views.param1.value
+    self.pad_synth.overtones_param2 = views.param2.value
+
+    self.pad_synth.bandwidth = views.bandwidth.value
+    self.pad_synth.bandwidth_growth = views.growth.value
+
+    self.pad_synth.unison_multiplier = views.unison_multiplier.value
+    self.pad_synth.unison_detune = views.unison_detune.value
+    self.pad_synth.unison_width = views.unison_width.value
+
+    self.pad_synth.sample_rate = self.sample_rate_values[views.sample_rate.value]
+    self.pad_synth.bit_depth = self.bit_depth_values[views.bit_depth.value]
+
+    self.pad_synth.first_note = views.first_note.value
+    self.pad_synth.last_note = views.last_note.value
+    self.pad_synth.keyzones_step = views.keyzones_step.value
+
+    self.pad_synth.test_note = views.test_note.value
+    self.pad_synth.test_sample_rate = self.sample_rate_values[views.test_sample_rate.value]
+    self.pad_synth.test_duration = views.test_duration.value
+
+    self.pad_synth.base_function = views.base_function.value
+
+    self.pad_synth.harmonics = { }
+    for i = 1, 256 do
+        self.pad_synth.harmonics[i] = self.harmonics[i] -- lin_to_ln (views["H" .. i].value)
+    end
+
+    self.pad_synth.harmonics_output = { }
+    for i = 1, 256 do
+        self.pad_synth.harmonics_output[i] = self.harmonics_output[i]
+    end
+
+    self.pad_synth.formula_string = views.formula_string.value
+    self.pad_synth.formula_curvature = views.formula_curvature.value
+    self.pad_synth.formula_torsion = views.formula_torsion.value
+    self.pad_synth.formula_shape = views.formula_shape.value
+
+end
+
+
+----------------------------------------------------------------------------------------------------
+
+
+local formula_context =
+{
+    i = 0,
+    x = 0,
+
+    alternate =
+        function(i, ...)
+            local args = {...}
+            local j = i % #args
+            if j == 0 then j = #args end
+            return args[j]
+        end,
+
+    curve = function(x, curvature, torsion, shape) return curve(x, shape, torsion, curvature) end,
+    exponential = function(...) return curve_exponential(...) end,
+    logarithmic = function(...) return curve_logarithmic(...) end,
+    circular = function(...) return curve_circular(...) end,
+    half_sinusoidal = function(...) return curve_half_sinusoidal(...) end,
+    sinusoidal = function(...) return curve_sinusoidal(...) end,
+    arcsinusoidal = function(...) return curve_arcsinusoidal(...) end,
+}
+setmetatable(formula_context, {__index = math})
 
 
 ----------------------------------------------------------------------------------------------------
@@ -169,68 +256,6 @@ end
 ----------------------------------------------------------------------------------------------------
 
 
-function PadSynthWindow:update_parameters ()
-
-    local views = self.vb.views
-
-    self.pad_synth.volume = views.volume.value
-    self.pad_synth.sample_duration = views.duration.value
-    self.pad_synth.nb_channels = views.nb_channels.value
-
-    self.pad_synth.autofade = views.autofade.value
-    self.pad_synth.new_note_action = views.new_note_action.value
-    self.pad_synth.interpolation = views.interpolation.value
-    self.pad_synth.oversample_enabled = views.oversample_enabled.value
-
-    self.pad_synth.overtones_placement = views.overtones_placement.value
-    self.pad_synth.overtones_treshold = views.overtones_treshold.value
-    self.pad_synth.overtones_amount = views.overtones_amount.value
-    self.pad_synth.overtones_harmonize = views.overtones_harmonize.value
-    self.pad_synth.overtones_param1 = views.param1.value
-    self.pad_synth.overtones_param2 = views.param2.value
-
-    self.pad_synth.bandwidth = views.bandwidth.value
-    self.pad_synth.bandwidth_growth = views.growth.value
-
-    self.pad_synth.unison_multiplier = views.unison_multiplier.value
-    self.pad_synth.unison_detune = views.unison_detune.value
-    self.pad_synth.unison_width = views.unison_width.value
-
-    self.pad_synth.sample_rate = self.sample_rate_values[views.sample_rate.value]
-    self.pad_synth.bit_depth = self.bit_depth_values[views.bit_depth.value]
-
-    self.pad_synth.first_note = views.first_note.value
-    self.pad_synth.last_note = views.last_note.value
-    self.pad_synth.keyzones_step = views.keyzones_step.value
-
-    self.pad_synth.test_note = views.test_note.value
-    self.pad_synth.test_sample_rate = self.sample_rate_values[views.test_sample_rate.value]
-    self.pad_synth.test_duration = views.test_duration.value
-
-    self.pad_synth.base_function = views.base_function.value
-
-    self.pad_synth.harmonics = { }
-    for i = 1, 256 do
-        self.pad_synth.harmonics[i] = self.harmonics[i] -- lin_to_ln (views["H" .. i].value)
-    end
-
-    self.pad_synth.random_part = { }
-    for i = 1, 256 do
-        self.pad_synth.random_part[i] = self.random_part[i]
-    end
-
-    self.pad_synth.formula_string = views.formula_string.value
-    self.pad_synth.formula_randomness = views.formula_randomness.value
-    self.pad_synth.formula_curvature = views.formula_curvature.value
-    self.pad_synth.formula_torsion = views.formula_torsion.value
-    self.pad_synth.formula_shape = views.formula_shape.value
-
-end
-
-
-----------------------------------------------------------------------------------------------------
-
-
 function PadSynthWindow:cancel_generation ()
 
     in_progress_abort  ()
@@ -281,33 +306,6 @@ local function to_note_number (v)
     return octave * 12 + note
 
 end
-
-
-----------------------------------------------------------------------------------------------------
-
-
-local formula_context =
-{
-    i = 0,
-    x = 0,
-
-    alternate =
-        function(i, ...)
-            local args = {...}
-            local j = i % #args
-            if j == 0 then j = #args end
-            return args[j]
-        end,
-
-    curve = function(x, curvature, torsion, shape) return curve(x, shape, torsion, curvature) end,
-    exponential = function(...) return curve_exponential(...) end,
-    logarithmic = function(...) return curve_logarithmic(...) end,
-    circular = function(...) return curve_circular(...) end,
-    half_sinusoidal = function(...) return curve_half_sinusoidal(...) end,
-    sinusoidal = function(...) return curve_sinusoidal(...) end,
-    arcsinusoidal = function(...) return curve_arcsinusoidal(...) end,
-}
-setmetatable(formula_context, {__index = math})
 
 
 ----------------------------------------------------------------------------------------------------
@@ -1121,6 +1119,18 @@ function PadSynthWindow:gui ()
 
                     vb:button
                     {
+                        text = "Fully Random",
+                        notifier =
+                            function()
+                                for i = 1, 256 do
+                                    self.harmonics[i] = math.random()
+                                end
+                                self:update_harmonics_sliders()
+                            end
+                    },
+
+                    vb:button
+                    {
                         text = "* Random",
                         notifier =
                             function()
@@ -1188,6 +1198,21 @@ function PadSynthWindow:gui ()
                             function()
                                 for i = 1, 256 do
                                     local y = (256 - i) / 255
+                                    self.harmonics[i] = self.harmonics[i] * y
+                                end
+                                self:update_harmonics_sliders()
+                            end
+                    },
+
+                    vb:button
+                    {
+                        text = "* Inverse Ramp",
+                        notifier =
+                            function()
+                                for i = 1, 256 do
+                                    local y = 1 - (256 - i) / (2 * 255)
+                                    local y = (256 - i) / 255
+                                    y = 1 - 7 * y / 8
                                     self.harmonics[i] = self.harmonics[i] * y
                                 end
                                 self:update_harmonics_sliders()
@@ -1285,6 +1310,74 @@ function PadSynthWindow:gui ()
                             end
                         end
                 },
+
+                vb:row
+                {
+                    spacing = dialog_spacing,
+    
+                    vb:row
+                    {
+                        vb:vertical_aligner
+                        {
+                            mode = "center",
+                            vb:text
+                            {
+                                text = "Curvature: "
+                            },
+                        },
+                        vb:rotary
+                        {
+                            id = "formula_curvature",
+                            min = -1,
+                            max = 1,
+                            value = ps.formula_curvature,
+                            notifier = function() self:apply_formula() end,
+                        },
+                    },
+    
+                    vb:row
+                    {
+                        vb:vertical_aligner
+                        {
+                            mode = "center",
+                            vb:text
+                            {
+                                text = "Curve torsion: "
+                            },
+                        },
+                        vb:rotary
+                        {
+                            id = "formula_torsion",
+                            min = -1,
+                            max = 1,
+                            value = ps.formula_torsion,
+                            notifier = function() self:apply_formula() end,
+                        },
+                    },
+    
+                    vb:row
+                    {
+                        vb:vertical_aligner
+                        {
+                            mode = "center",
+                            vb:text
+                            {
+                                text = "Curve shape: "
+                            },
+                        },
+                        vb:rotary
+                        {
+                            id = "formula_shape",
+                            min = -1,
+                            max = 1,
+                            value = ps.formula_shape,
+                            notifier = function() self:apply_formula() end,
+                        },
+                    },
+    
+                },
+    
+
         },
 
             vb:horizontal_aligner
@@ -1319,120 +1412,6 @@ function PadSynthWindow:gui ()
                 },
             },
 
-            vb:horizontal_aligner
-            {
-                spacing = dialog_spacing,
-
-                vb:space
-                {
-                    width = 150,
-                },
-
-                vb:row
-                {
-                    vb:vertical_aligner
-                    {
-                        mode = "center",
-                        vb:text
-                        {
-                            text = "Randomness: "
-                        },
-                    },
-                    vb:rotary
-                    {
-                        id = "formula_randomness",
-                        value = ps.formula_randomness,
-                        min = -1,
-                        max = 1,
-                        notifier =
-                            function()
-                                self:apply_formula()
-                            end
-                    },
-                },
-
-                vb:vertical_aligner
-                {
-                    mode = "center",
-                    vb:button
-                    {
-                        text = "Re-Roll",
-                        notifier =
-                            function()
-                                for i = 1, 256 do
-                                    self.random_part[i] = math.random()
-                                end
-                                self:apply_formula()
-                            end
-                    },
-                },
-
-                vb:space
-                {
-                    width = 100,
-                },
-
-                vb:row
-                {
-                    vb:vertical_aligner
-                    {
-                        mode = "center",
-                        vb:text
-                        {
-                            text = "Curvature: "
-                        },
-                    },
-                    vb:rotary
-                    {
-                        id = "formula_curvature",
-                        min = -1,
-                        max = 1,
-                        value = ps.formula_curvature,
-                        notifier = function() self:apply_formula() end,
-                    },
-                },
-
-                vb:row
-                {
-                    vb:vertical_aligner
-                    {
-                        mode = "center",
-                        vb:text
-                        {
-                            text = "Curve torsion: "
-                        },
-                    },
-                    vb:rotary
-                    {
-                        id = "formula_torsion",
-                        min = -1,
-                        max = 1,
-                        value = ps.formula_torsion,
-                        notifier = function() self:apply_formula() end,
-                    },
-                },
-
-                vb:row
-                {
-                    vb:vertical_aligner
-                    {
-                        mode = "center",
-                        vb:text
-                        {
-                            text = "Curve shape: "
-                        },
-                    },
-                    vb:rotary
-                    {
-                        id = "formula_shape",
-                        min = -1,
-                        max = 1,
-                        value = ps.formula_shape,
-                        notifier = function() self:apply_formula() end,
-                    },
-                },
-
-            },
 
         },
 
@@ -1522,6 +1501,7 @@ function PadSynthWindow:gui ()
                                 -- local v = lin_to_ln (vb.views["H" .. i].value)
                                 local v = vb.views["H" .. i].value
                                 self.harmonics[i + offset] = v
+                                self:apply_formula()
                                 vb.views.status.text = "Harmonic " .. i + offset .. " set to " .. string.format ("%.1f %%", 100 * v)
                             end
                         },
@@ -1560,6 +1540,7 @@ function PadSynthWindow:gui ()
     end
 
     self:update_harmonics_sliders ()
+    self:apply_formula ()
 
     overtones_placement_notifier ()
     on_unison_multiplier_changed ()
@@ -1588,16 +1569,6 @@ function PadSynthWindow:apply_formula ()
     for i = 1, 256 do
         formula_context.i = i
         formula_context.x = (i - 1) / 255
-        formula_context.random =
-            function(m, n) 
-                if m == nil then
-                    return self.random_part[i] 
-                elseif n == nil then
-                    return 1 + math.floor(0.5 + (m - 1) * self.random_part[i])
-                else
-                    return n + math.floor(0.5 + (m - n) * self.random_part[i])
-                end
-            end
         local status, val = xpcall(formula,
             function(err)
                 vb.views.formula_error.text = "ERROR: " .. err
@@ -1608,14 +1579,12 @@ function PadSynthWindow:apply_formula ()
             return
         end
         if status then
-            local randomness = vb.views.formula_randomness.value
-            val = val * (1 + randomness * self.random_part[i])
             val = curve(val, vb.views.formula_shape.value, vb.views.formula_torsion.value, vb.views.formula_curvature.value)
             val = curve(val, vb.views.formula_shape.value, vb.views.formula_torsion.value, vb.views.formula_curvature.value)
-            self.harmonics[i] = clamp(val, 0.0, 1.0)
+            self.harmonics_output[i] = self.harmonics[i] * clamp(val, 0.0, 1.0)
         end
     end
-    self:update_harmonics_sliders ()
+    self:update_harmonics_output_display ()
 end
 
 
@@ -1636,9 +1605,19 @@ function PadSynthWindow:update_harmonics_sliders ()
             self.vb.views["harmonic_label_" .. i].text = "-"
         end
     end
+end
+
+function PadSynthWindow:update_harmonics_output_display ()
+
+    local maximum = 0
+    for i = 1, 256 do
+        if self.harmonics_output[i] > maximum then
+            maximum = self.harmonics_output[i]
+        end
+    end
 
     for i = 1, 256 do
-        local y = self.harmonics[i]
+        local y = clamp(self.harmonics_output[i] / maximum, 0, 1)
         local h = 150
         local yy = math.floor(y * h + 0.5)
         self.vb.views["output_above_" .. i].height = 1 + h - yy

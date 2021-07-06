@@ -97,7 +97,7 @@ function PadSynth:prepare_harmonics ()
 
     if self.base_function == 1 then
 
-        self.prepared_harmonics = self.harmonics
+        self.prepared_harmonics = self.harmonics_output
 
     elseif self.base_function == 2 then
 
@@ -106,7 +106,7 @@ function PadSynth:prepare_harmonics ()
         for i = 1, 256 do
             self.prepared_harmonics[i] = 0
         end
-        for i, v in ipairs (self.harmonics) do
+        for i, v in ipairs (self.harmonics_output) do
             if v > 0 then
                 for j = 1, 256 do
                     if i * j <= 256 then
@@ -125,7 +125,7 @@ function PadSynth:prepare_harmonics ()
         for i = 1, 256 do
             self.prepared_harmonics[i] = 0
         end
-        for i, v in ipairs (self.harmonics) do
+        for i, v in ipairs (self.harmonics_output) do
             if v > 0 then
                 for j = 1, 256 do
                     if i * j <= 256 then
@@ -146,7 +146,7 @@ function PadSynth:prepare_harmonics ()
         for i = 1, 256 do
             self.prepared_harmonics[i] = 0
         end
-        for i, v in ipairs (self.harmonics) do
+        for i, v in ipairs (self.harmonics_output) do
             if v > 0 then
                 for j = 1, 256 do
                     if i * j <= 256 then
@@ -165,7 +165,7 @@ function PadSynth:prepare_harmonics ()
         for i = 1, 256 do
             self.prepared_harmonics[i] = 0
         end
-        for i, v in ipairs (self.harmonics) do
+        for i, v in ipairs (self.harmonics_output) do
             if v > 0 then
                 for j = 1, 256 do
                     if i * j <= 256 then
@@ -186,7 +186,7 @@ function PadSynth:prepare_harmonics ()
         for i = 1, 256 do
             self.prepared_harmonics[i] = 0
         end
-        for i, v in ipairs (self.harmonics) do
+        for i, v in ipairs (self.harmonics_output) do
             if v > 0 then
                 for j = 1, 256 do
                     if i * j <= 256 then
@@ -202,7 +202,7 @@ function PadSynth:prepare_harmonics ()
 
     else
 
-        self.prepared_harmonics = self.harmonics
+        self.prepared_harmonics = self.harmonics_output
 
     end
 
@@ -666,16 +666,15 @@ function PadSynth:initialize_parameters ()
 
     self.harmonics = { }
     for i = 1, 256 do
-        self.harmonics[i] = 1 / i
+        self.harmonics[i] = 1
     end
 
-    self.random_part = { }
+    self.harmonics_output = { }
     for i = 1, 256 do
-        self.random_part[i] = math.random()
+        self.harmonics_output[i] = 1/i
     end
 
     self.formula_string = "return 1 / i"
-    self.formula_randomness = 0
     self.formula_curvature = 0
     self.formula_torsion = 0
     self.formula_shape = 0
@@ -748,14 +747,7 @@ function PadSynth:save_parameters ()
     end
     name = name .. "}, "
 
-    name = name .. "random_part={ "
-    for i = 1, #self.random_part do
-        name = name .. self.random_part[i] .. ", "
-    end
-    name = name .. "}, "
-
     name = name .. "formula_string=\"" .. self.formula_string .. "\", "
-    name = name .. "formula_randomness=" .. self.formula_randomness .. ", "
     name = name .. "formula_curvature=" .. self.formula_curvature .. ", "
     name = name .. "formula_torsion=" .. self.formula_torsion .. ", "
     name = name .. "formula_shape=" .. self.formula_shape .. ", "
@@ -838,10 +830,8 @@ function PadSynth:load_parameters ()
     self.base_function = data.base_function
 
     self.harmonics = data.harmonics
-    self.random_part = data.random_part
 
     self.formula_string = data.formula_string
-    self.formula_randomness = data.formula_randomness
     self.formula_curvature = data.formula_curvature
     self.formula_torsion = data.formula_torsion
     self.formula_shape = data.formula_shape
