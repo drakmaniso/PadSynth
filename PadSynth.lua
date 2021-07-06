@@ -653,13 +653,13 @@ function PadSynth:initialize_parameters ()
     self.sample_rate = 44100
     self.bit_depth = 16
 
-    self.first_note = 48
+    self.first_note = 36
     self.last_note = 48
-    self.keyzones_step = 3
+    self.keyzones_step = 6
 
     self.test_note = 48
     self.test_sample_rate = 44100
-    self.test_duration = 0.25
+    self.test_duration = 0.4
 
     self.base_function = 1
 
@@ -670,11 +670,11 @@ function PadSynth:initialize_parameters ()
 
     self.random_part = { }
     for i = 1, 256 do
-        self.random_part[i] = 1 / i
+        self.random_part[i] = math.random()
     end
 
-    self.formula_preset = 1
-    self.formula_custom_string = "return 1 / i"
+    self.formula_preset = 4
+    self.formula_string = "return 1 / i"
     self.formula_randomness = 0
 
 end
@@ -752,7 +752,7 @@ function PadSynth:save_parameters ()
     name = name .. "}, "
 
     name = name .. "formula_preset=" .. self.formula_preset .. ", "
-    name = name .. "formula_custom_string=\"" .. self.formula_custom_string .. "\", "
+    name = name .. "formula_string=\"" .. self.formula_string .. "\", "
     name = name .. "formula_randomness=" .. self.formula_randomness .. ", "
 
     self.instrument.samples[index].name = name .. "}"
@@ -836,7 +836,7 @@ function PadSynth:load_parameters ()
     self.random_part = data.random_part
 
     self.formula_preset = data.formula_preset
-    self.formula_custom_string = data.formula_custom_string
+    self.formula_string = data.formula_string
     self.formula_randomness = data.formula_randomness
 
     if self.version == 0 then
