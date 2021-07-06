@@ -85,11 +85,11 @@ function curve(x, shape, torsion, curvature)
     local curve_b
     if shape < 0.0 then
         shape = shape + 1.0
-        curve_a = curve_logarithmic
+        curve_a = curve_half_sinusoidal
         curve_b = curve_exponential
     else
         curve_a = curve_exponential
-        curve_b = curve_half_sinusoidal
+        curve_b = curve_logarithmic
     end
 
     if curvature > 0.0 then

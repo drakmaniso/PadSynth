@@ -654,9 +654,9 @@ function PadSynth:initialize_parameters ()
     self.sample_rate = 44100
     self.bit_depth = 16
 
-    self.first_note = 36
-    self.last_note = 48
-    self.keyzones_step = 6
+    self.first_note = 24
+    self.last_note = 60
+    self.keyzones_step = 12
 
     self.test_note = 48
     self.test_sample_rate = 44100
@@ -674,7 +674,6 @@ function PadSynth:initialize_parameters ()
         self.random_part[i] = math.random()
     end
 
-    self.formula_preset = 4
     self.formula_string = "return 1 / i"
     self.formula_randomness = 0
     self.formula_curvature = 0
@@ -755,7 +754,6 @@ function PadSynth:save_parameters ()
     end
     name = name .. "}, "
 
-    name = name .. "formula_preset=" .. self.formula_preset .. ", "
     name = name .. "formula_string=\"" .. self.formula_string .. "\", "
     name = name .. "formula_randomness=" .. self.formula_randomness .. ", "
     name = name .. "formula_curvature=" .. self.formula_curvature .. ", "
@@ -842,7 +840,6 @@ function PadSynth:load_parameters ()
     self.harmonics = data.harmonics
     self.random_part = data.random_part
 
-    self.formula_preset = data.formula_preset
     self.formula_string = data.formula_string
     self.formula_randomness = data.formula_randomness
     self.formula_curvature = data.formula_curvature

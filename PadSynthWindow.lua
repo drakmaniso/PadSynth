@@ -21,7 +21,6 @@ function PadSynthWindow:__init (pad_synth)
         self.random_part[i] = v
     end
 
-    self.formula_preset = pad_synth.formula_preset
     self.formula_custom_string = pad_synth.formula_custom_string
     self.formula_randomness = pad_synth.formula_randomness
     self.formula_curvature = pad_synth.formula_curvature
@@ -220,7 +219,6 @@ function PadSynthWindow:update_parameters ()
         self.pad_synth.random_part[i] = self.random_part[i]
     end
 
-    self.pad_synth.formula_preset = views.formula_presets.value
     self.pad_synth.formula_string = views.formula_string.value
     self.pad_synth.formula_randomness = views.formula_randomness.value
     self.pad_synth.formula_curvature = views.formula_curvature.value
@@ -299,8 +297,15 @@ local formula_context =
             local j = i % #args
             if j == 0 then j = #args end
             return args[j]
-        end
+        end,
 
+    curve = function(x, curvature, torsion, shape) return curve(x, shape, torsion, curvature) end,
+    exponential = function(...) return curve_exponential(...) end,
+    logarithmic = function(...) return curve_logarithmic(...) end,
+    circular = function(...) return curve_circular(...) end,
+    half_sinusoidal = function(...) return curve_half_sinusoidal(...) end,
+    sinusoidal = function(...) return curve_sinusoidal(...) end,
+    arcsinusoidal = function(...) return curve_arcsinusoidal(...) end,
 }
 setmetatable(formula_context, {__index = math})
 
@@ -1107,18 +1112,29 @@ function PadSynthWindow:gui ()
                     vb:popup
                     {
                         id = "formula_presets",
-                        items = { "Fundamental Only", "All Harmonics", "Linear Ramp", "Square Root Ramp", "Log Ramp", "Saw", "Square", "Soft Saw", "Triangle", "Circle", "Sawtooth 1", "Sawtooth 2", "Sawtooth 3", "Fully Random"  },
-                        value = ps.formula_preset,
+                        items = 
+                            {
+                                "-- Formula Presets --",
+                                "Sine", "Triangle", "Soft Saw", "Square", "Saw",
+                                "All Harmonics", "Cosinus Ramp", "Linear Ramp", "Square Root Ramp", "Log Ramp",
+                                "Circle",
+                                "Sawtooth 1", "Sawtooth 2", "Sawtooth 3",
+                                "Fully Random",
+                            },
+                        value = 1,
                         width = 150,
                         notifier =
                             function(choice)
+                                vb.views.formula_presets.value = 1
                                 local items = vb.views.formula_presets.items
-                                if items[choice] == "Fundamental Only" then
+                                if items[choice] == "Sine" then
                                     vb.views.formula_string.value = "if i == 1 then return 1 else return 0 end"
                                 elseif items[choice] == "All Harmonics" then
                                     vb.views.formula_string.value = "return 1"
                                 elseif items[choice] == "Saw" then
                                     vb.views.formula_string.value = "return 1 / i"
+                                elseif items[choice] == "Cosinus Ramp" then
+                                    vb.views.formula_string.value = "return cos(x * pi/2)"
                                 elseif items[choice] == "Linear Ramp" then
                                     vb.views.formula_string.value = "return 1 - x"
                                 elseif items[choice] == "Square Root Ramp" then
@@ -1421,6 +1437,7 @@ function PadSynthWindow:apply_formula ()
         if status then
             local randomness = vb.views.formula_randomness.value
             val = val * (1 + randomness * self.random_part[i])
+            val = curve(val, vb.views.formula_shape.value, vb.views.formula_torsion.value, vb.views.formula_curvature.value)
             val = curve(val, vb.views.formula_shape.value, vb.views.formula_torsion.value, vb.views.formula_curvature.value)
             self.harmonics[i] = clamp(val, 0.0, 1.0)
         end
