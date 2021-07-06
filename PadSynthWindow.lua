@@ -22,6 +22,7 @@ function PadSynthWindow:__init (pad_synth)
     end
 
     self.formula_custom_string = pad_synth.formula_custom_string
+    self.formula_length = pad_synth.formula_length
     self.formula_curvature = pad_synth.formula_curvature
     self.formula_torsion = pad_synth.formula_torsion
     self.formula_shape = pad_synth.formula_shape
@@ -69,7 +70,6 @@ function PadSynthWindow:update_parameters ()
     self.pad_synth.keyzones_step = views.keyzones_step.value
 
     self.pad_synth.test_note = views.test_note.value
-    self.pad_synth.test_sample_rate = self.sample_rate_values[views.test_sample_rate.value]
     self.pad_synth.test_duration = views.test_duration.value
 
     self.pad_synth.base_function = views.base_function.value
@@ -86,6 +86,7 @@ function PadSynthWindow:update_parameters ()
 
     self.pad_synth.formula_string = views.formula_string.value
     self.pad_synth.formula_curvature = views.formula_curvature.value
+    self.pad_synth.formula_length = views.formula_length.value
     self.pad_synth.formula_torsion = views.formula_torsion.value
     self.pad_synth.formula_shape = views.formula_shape.value
 
@@ -332,16 +333,6 @@ function PadSynthWindow:gui ()
     elseif ps.sample_rate == 96000 then sample_rate = 7
     end
 
-    local test_sample_rate = 1
-    if     ps.test_sample_rate == 11025 then test_sample_rate = 1
-    elseif ps.test_sample_rate == 22050 then test_sample_rate = 2
-    elseif ps.test_sample_rate == 32000 then test_sample_rate = 3
-    elseif ps.test_sample_rate == 44100 then test_sample_rate = 4
-    elseif ps.test_sample_rate == 48000 then test_sample_rate = 5
-    elseif ps.test_sample_rate == 88200 then test_sample_rate = 6
-    elseif ps.test_sample_rate == 96000 then test_sample_rate = 7
-    end
-
     local bit_depth = 1
     if     ps.bit_depth == 16 then bit_depth = 1
     elseif ps.bit_depth == 24 then bit_depth = 2
@@ -501,122 +492,8 @@ function PadSynthWindow:gui ()
 
                     },
 
-                    vb:horizontal_aligner
-                    {
-                        mode = "center",
-                        vb:switch { id = "nb_channels", items = { "Mono", "Stereo", }, value = ps.nb_channels, width = 100, },
-                    },
-
                 },
 
-
-                vb:vertical_aligner
-                {
-                    mode = "top",
-
-                    vb:horizontal_aligner
-                    {
-                        mode = "left",
-
-                        vb:checkbox
-                        {
-                            id = "autofade",
-                            value = ps.autofade,
-                            notifier = function ()
-                                for i, sample in ipairs (ps.instrument.samples) do
-                                    if string.sub (sample.name, 1, 13) == "PadSynth Note" then
-                                        sample.autofade = vb.views.autofade.value
-                                    end
-                                end
-                            end,
-                            tooltip = "Raw: play the sample as is\nAutofade: apply a quick fade to the beginning and end to prevent clicking"
-                        },
-
-                        vb:text { text = "Attack Quick Fade" },
-                    },
-
-                    vb:horizontal_aligner
-                    {
-                        mode = "justify",
-
-                        vb:text { text = "NNA" },
-
-                        vb:popup
-                        {
-                            id = "new_note_action",
-                            items = { "Cut", "Note Off", "Continue", },
-                            value = ps.new_note_action,
-                            notifier = function ()
-                                for i, sample in ipairs (ps.instrument.samples) do
-                                    if string.sub (sample.name, 1, 13) == "PadSynth Note" then
-                                        if vb.views.new_note_action.value == 2 then
-                                            sample.new_note_action = renoise.Sample.NEW_NOTE_ACTION_NOTE_OFF
-                                        elseif vb.views.new_note_action.value == 3 then
-                                            sample.new_note_action = renoise.Sample.NEW_NOTE_ACTION_SUSTAIN
-                                        else
-                                            sample.new_note_action = renoise.Sample.NEW_NOTE_ACTION_NOTE_CUT
-                                        end
-                                    end
-                                end
-                            end,
-                            tooltip = "Define what happens when a new note is triggered in the same column\nCut: the previous note is interrupted (without release)\nNote Off: the previous note ends normally (play the release part of the envelope)\nContinue: the previous note is held",
-                            },
-                    },
-
-                    vb:row { height = 8},
-
-                    vb:horizontal_aligner
-                    {
-                        mode = "justify",
-
-                        vb:text { text = "Interpolation" },
-
-                        vb:popup
-                        {
-                            id = "interpolation",
-                            items = { "None", "Linear", "Cubic", "Sinc", },
-                            value = ps.interpolation,
-                            notifier = function ()
-                                for i, sample in ipairs (ps.instrument.samples) do
-                                    if string.sub (sample.name, 1, 13) == "PadSynth Note" then
-                                        if vb.views.interpolation.value == 2 then
-                                            sample.interpolation_mode = renoise.Sample.INTERPOLATE_LINEAR
-                                        elseif vb.views.interpolation.value == 3 then
-                                            sample.interpolation_mode = renoise.Sample.INTERPOLATE_CUBIC
-                                        elseif vb.views.interpolation.value == 4 then
-                                            sample.interpolation_mode = renoise.Sample.INTERPOLATE_SINC
-                                        else
-                                            sample.interpolation_mode = renoise.Sample.INTERPOLATE_NONE
-                                        end
-                                    end
-                                end
-                            end,
-                            tooltip = "Define the interpolation method used when repitching the sample.",
-                            },
-                    },
-
-                    vb:horizontal_aligner
-                    {
-                        mode = "left",
-
-                        vb:checkbox
-                        {
-                            id = "oversample_enabled",
-                            value = ps.oversample_enabled,
-                            notifier = function ()
-                                for i, sample in ipairs (ps.instrument.samples) do
-                                    if string.sub (sample.name, 1, 13) == "PadSynth Note" then
-                                        sample.oversample_enabled = vb.views.oversample_enabled.value
-                                    end
-                                end
-                            end,
-                            tooltip = "Whether interpolation is oversampled or not."
-                        },
-
-                        vb:text { text = "Oversampling" },
-                    },
-
-                },
 
             },
 
@@ -966,7 +843,6 @@ function PadSynthWindow:gui ()
                 spacing = control_spacing,
                 height = "100%",
 
-
                 vb:horizontal_aligner
                 {
                     mode = "center",
@@ -975,17 +851,159 @@ function PadSynthWindow:gui ()
 
                 vb:row
                 {
-                    vb:text { text = "Sample Rate", width = 80, },
-                    vb:popup { id = "sample_rate", items = self.sample_rate_names, value = sample_rate, },
-                },
+                    style = "invisible",
+                    margin = 0,
+                    spacing = control_spacing,
+                    height = "100%",
+                    vb:column
+                    {
+                        style = "invisible",
+                        margin = 0,
+                        spacing = control_spacing,
+                        height = "100%",
 
-                vb:row
-                {
-                    vb:text { text = "Bit Depth", width = 80, },
-                    vb:popup { id = "bit_depth", items = self.bit_depth_names, value = bit_depth, },
-                },
 
-                vb:text { text = "Key Range", font = "bold", width = "100%", align = "center", },
+                        vb:horizontal_aligner
+                        {
+                            mode = "center",
+                            vb:switch { id = "nb_channels", items = { "Mono", "Stereo", }, value = ps.nb_channels, width = 100, },
+                        },
+
+                        vb:row
+                        {
+                            vb:text { text = "Sample Rate", width = 80, },
+                            vb:popup { id = "sample_rate", items = self.sample_rate_names, value = sample_rate, },
+                        },
+
+                        vb:row
+                        {
+                            vb:text { text = "Bit Depth", width = 80, },
+                            vb:popup { id = "bit_depth", items = self.bit_depth_names, value = bit_depth, },
+                        },
+
+                    },
+
+                    vb:vertical_aligner
+                    {
+                        mode = "top",
+
+                        vb:horizontal_aligner
+                        {
+                            mode = "left",
+
+                            vb:checkbox
+                            {
+                                id = "autofade",
+                                value = ps.autofade,
+                                notifier = function ()
+                                    for i, sample in ipairs (ps.instrument.samples) do
+                                        if string.sub (sample.name, 1, 13) == "PadSynth Note" then
+                                            sample.autofade = vb.views.autofade.value
+                                        end
+                                    end
+                                end,
+                                tooltip = "Raw: play the sample as is\nAutofade: apply a quick fade to the beginning and end to prevent clicking"
+                            },
+
+                            vb:text { text = "Attack Quick Fade" },
+                        },
+
+                        vb:horizontal_aligner
+                        {
+                            mode = "justify",
+
+                            vb:text { text = "NNA" },
+
+                            vb:popup
+                            {
+                                id = "new_note_action",
+                                items = { "Cut", "Note Off", "Continue", },
+                                value = ps.new_note_action,
+                                notifier = function ()
+                                    for i, sample in ipairs (ps.instrument.samples) do
+                                        if string.sub (sample.name, 1, 13) == "PadSynth Note" then
+                                            if vb.views.new_note_action.value == 2 then
+                                                sample.new_note_action = renoise.Sample.NEW_NOTE_ACTION_NOTE_OFF
+                                            elseif vb.views.new_note_action.value == 3 then
+                                                sample.new_note_action = renoise.Sample.NEW_NOTE_ACTION_SUSTAIN
+                                            else
+                                                sample.new_note_action = renoise.Sample.NEW_NOTE_ACTION_NOTE_CUT
+                                            end
+                                        end
+                                    end
+                                end,
+                                tooltip = "Define what happens when a new note is triggered in the same column\nCut: the previous note is interrupted (without release)\nNote Off: the previous note ends normally (play the release part of the envelope)\nContinue: the previous note is held",
+                                },
+                        },
+
+                        vb:row { height = 8},
+
+                        vb:horizontal_aligner
+                        {
+                            mode = "justify",
+
+                            vb:text { text = "Interpolation" },
+
+                            vb:popup
+                            {
+                                id = "interpolation",
+                                items = { "None", "Linear", "Cubic", "Sinc", },
+                                value = ps.interpolation,
+                                notifier = function ()
+                                    for i, sample in ipairs (ps.instrument.samples) do
+                                        if string.sub (sample.name, 1, 13) == "PadSynth Note" then
+                                            if vb.views.interpolation.value == 2 then
+                                                sample.interpolation_mode = renoise.Sample.INTERPOLATE_LINEAR
+                                            elseif vb.views.interpolation.value == 3 then
+                                                sample.interpolation_mode = renoise.Sample.INTERPOLATE_CUBIC
+                                            elseif vb.views.interpolation.value == 4 then
+                                                sample.interpolation_mode = renoise.Sample.INTERPOLATE_SINC
+                                            else
+                                                sample.interpolation_mode = renoise.Sample.INTERPOLATE_NONE
+                                            end
+                                        end
+                                    end
+                                end,
+                                tooltip = "Define the interpolation method used when repitching the sample.",
+                                },
+                        },
+
+                        vb:horizontal_aligner
+                        {
+                            mode = "left",
+
+                            vb:checkbox
+                            {
+                                id = "oversample_enabled",
+                                value = ps.oversample_enabled,
+                                notifier = function ()
+                                    for i, sample in ipairs (ps.instrument.samples) do
+                                        if string.sub (sample.name, 1, 13) == "PadSynth Note" then
+                                            sample.oversample_enabled = vb.views.oversample_enabled.value
+                                        end
+                                    end
+                                end,
+                                tooltip = "Whether interpolation is oversampled or not."
+                            },
+
+                            vb:text { text = "Oversampling" },
+                        },
+
+                    },
+                },
+            },
+
+
+            -- Key Range --------------------------------------------------------------------------------------------------------------------------
+
+            vb:column
+            {
+                style = "group",
+                margin = control_margin,
+                spacing = control_spacing,
+                height = "100%",
+
+                vb:text { text = "Multi-Sample", font = "bold", width = "100%", align = "center", },
 
                 vb:row
                 {
@@ -998,43 +1016,19 @@ function PadSynthWindow:gui ()
                 vb:row
                 {
                     id = "keyzones_group2",
-                    vb:text { text = "Step", width = 80, },
+                    vb:text { text = "Size of keyzones", width = 80, },
+                    vb:space { width = 24},
                     vb:valuebox { id = "keyzones_step", value = ps.keyzones_step, min = 1, max = 12, },
                 },
 
-            },
-
-
-            -- Test Note --------------------------------------------------------------------------------------------------------------------------
-
-            vb:column
-            {
-                style = "group",
-                margin = control_margin,
-                spacing = control_spacing,
-                height = "100%",
-
-                vb:text { text = "Test Note", font = "bold", width = "100%", align = "center", },
+                vb:space{height = 2 * control_spacing},
 
                 vb:row
                 {
                     id = "test_note_group1",
                     visible = true,
-                    vb:text { text = "Note", width = 80, },
+                    vb:text { text = "Test note", width = 80, },
                     vb:valuebox { id = "test_note", value = ps.test_note, min = 0, max = 119, tostring = to_note_string, tonumber = to_note_number, },
-                },
-
-                vb:row
-                {
-                    vb:text { text = "Sample Rate", width = 80, },
-                    vb:popup { id = "test_sample_rate", items = self.sample_rate_names, value = test_sample_rate, },
-                },
-
-                vb:row
-                {
-                    id = "test_note_group2",
-                    visible = true,
-                    vb:text { text = "Test Duration", width = 80, },
                     vb:valuefield
                     {
                         id ="test_duration",
@@ -1043,18 +1037,6 @@ function PadSynthWindow:gui ()
                         width = 60,
                         tonumber = tonumber,
                         tostring = function (v) return string.format ("%.2f s", v) end,
-                    },
-                },
-
-                vb:horizontal_aligner
-                {
-                    mode = "center",
-                    vb:button
-                    {
-                        id = "do_generate_test",
-                        width = 150,
-                        height = 26,
-                        text = "Generate Test Note",
                     },
                 },
 
@@ -1206,7 +1188,7 @@ function PadSynthWindow:gui ()
 
                     vb:button
                     {
-                        text = "* Inverse Ramp",
+                        text = "* Inverse",
                         notifier =
                             function()
                                 for i = 1, 256 do
@@ -1215,6 +1197,23 @@ function PadSynthWindow:gui ()
                                     y = 1 - 7 * y / 8
                                     self.harmonics[i] = self.harmonics[i] * y
                                 end
+                                self:update_harmonics_sliders()
+                            end
+                    },
+
+                    vb:button
+                    {
+                        text = "Take Output",
+                        notifier =
+                            function()
+                                for i = 1, 256 do
+                                    self.harmonics[i] = self.harmonics_output[i]
+                                end
+                                vb.views.formula_string.value = "return 1"
+                                vb.views.formula_curvature.value = 0
+                                vb.views.formula_torsion.value = 0
+                                vb.views.formula_shape.value = 0
+                                vb.views.formula_length.value = 0
                                 self:update_harmonics_sliders()
                             end
                     },
@@ -1257,7 +1256,7 @@ function PadSynthWindow:gui ()
             vb:horizontal_aligner
             {
                 width = "100%",
-                mode = "left",
+                mode = "justify",
                 vb:popup
                 {
                     id = "formula_presets",
@@ -1265,11 +1264,12 @@ function PadSynthWindow:gui ()
                         {
                             "-- Formula Presets --",
                             "All Overtones",
-                            "Saw", "Soft Saw", "Square", "Triangle",
-                            "Cosinus Ramp", "Linear Ramp", "Square Root Ramp", "Log Ramp",
-                            "Circle",
-                            "Sawtooth 1", "Sawtooth 2", "Sawtooth 3",
-                            "Waves",
+                            "Saw", "Bright Saw", "Extra Bright Saw", "Soft Saw", "Square", "Triangle",
+                            "-- Scale with X --",
+                            "Linear Ramp",
+                            "Cosinus Ramp", "Square Root Ramp", "Log Ramp",
+                            "Triangle Cycle", "Half Cycle", "Square Cycle",
+                            "Cosinus Cycle", "Sinus Cycle", "Many Cycles", "Helix",
                         },
                     value = 1,
                     width = 150,
@@ -1283,38 +1283,56 @@ function PadSynthWindow:gui ()
                                 vb.views.formula_string.value = "return 1"
                             elseif items[choice] == "Saw" then
                                 vb.views.formula_string.value = "return 1 / i"
-                            elseif items[choice] == "Cosinus Ramp" then
-                                vb.views.formula_string.value = "return cos(x * pi/2)"
-                            elseif items[choice] == "Linear Ramp" then
-                                vb.views.formula_string.value = "return 1 - x"
-                            elseif items[choice] == "Square Root Ramp" then
-                                vb.views.formula_string.value = "return 1 - sqrt(x)"
-                            elseif items[choice] == "Log Ramp" then
-                                vb.views.formula_string.value = "return 1 - log10(1+10*x)"
+                            elseif items[choice] == "Bright Saw" then
+                                vb.views.formula_string.value = "return sqrt(1 / i)"
+                            elseif items[choice] == "Extra Bright Saw" then
+                                vb.views.formula_string.value = "return logarithmic(1 / i, 1)"
                             elseif items[choice] == "Square" then
                                 vb.views.formula_string.value = "return alternate(i, 1/i, 0)"
                             elseif items[choice] == "Soft Saw" then
                                 vb.views.formula_string.value = "return 1 / (i * i)"
                             elseif items[choice] == "Triangle" then
                                 vb.views.formula_string.value = "return alternate(i, 1 / (i * i), 0)"
-                            elseif items[choice] == "Circle" then
-                                vb.views.formula_string.value = "local length = 8; if i < length then return cos((i / length) * pi/2) else return 0 end"
-                            elseif items[choice] == "Sawtooth 1" then
-                                vb.views.formula_string.value = "a = 3/(i+1); return alternate(i, a, 0.75*a, 0.5*a, 0.25*a)"
-                            elseif items[choice] == "Sawtooth 2" then
-                                vb.views.formula_string.value = "return alternate(i + 2, 1/i, 2/i, 3/i)"
-                            elseif items[choice] == "Sawtooth 3" then
-                                vb.views.formula_string.value = "a = 1 - sqrt(x); return alternate(i, a, 0.75*a, 0.5*a, 0.25*a)"
-                            elseif items[choice] == "Waves" then
+                            elseif items[choice] == "Ramp 8" then
+                                vb.views.formula_string.value = "length = 8 ; return (length - i)/(length - 1)"
+                            elseif items[choice] == "Ramp 16" then
+                                vb.views.formula_string.value = "length = 16 ; return (length - i)/(length - 1)"
+                            elseif items[choice] == "Ramp 32" then
+                                vb.views.formula_string.value = "length = 32 ; return (length - i)/(length - 1)"
+                            elseif items[choice] == "Ramp 64" then
+                                vb.views.formula_string.value = "length = 64 ; return (length - i)/(length - 1)"
+                            elseif items[choice] == "Cosinus Ramp" then
+                                vb.views.formula_string.value = "if x <= 1 then return cos(x * pi/2) else return 0 end"
+                            elseif items[choice] == "Linear Ramp" then
+                                vb.views.formula_string.value = "return 1 - x"
+                            elseif items[choice] == "Square Root Ramp" then
+                                vb.views.formula_string.value = "return 1 - sqrt(x)"
+                            elseif items[choice] == "Log Ramp" then
+                                vb.views.formula_string.value = "return 1 - log10(1+10*x)"
+                            elseif items[choice] == "Triangle Cycle" then
+                                vb.views.formula_string.value = "return abs(x % 1 - 0.5)"
+                            elseif items[choice] == "Square Cycle" then
+                                vb.views.formula_string.value = "return (x % 1) < 0.5 and 1 or 0"
+                            elseif items[choice] == "Half Cycle" then
+                                vb.views.formula_string.value = "return 1 - (x % 1)"
+                            elseif items[choice] == "Cosinus Cycle" then
+                                vb.views.formula_string.value = "return (1 + cos(x * pi))/ 2"
+                            elseif items[choice] == "Sinus Cycle" then
+                                vb.views.formula_string.value = "return (1 + sin(x * pi ))/ 2"
+                            elseif items[choice] == "Many Cycles" then
                                 vb.views.formula_string.value = "nb = 16; return (1 + cos(x * (2 * nb + 1) * pi))/ 2"
+                            elseif items[choice] == "Helix" then
+                                vb.views.formula_string.value = "nb = 32000; return (1 + cos(x * (2 * nb + 1) * pi))/ 2"
                             end
                         end
                 },
 
+                vb:row{},
+
                 vb:row
                 {
                     spacing = dialog_spacing,
-    
+
                     vb:row
                     {
                         vb:vertical_aligner
@@ -1371,6 +1389,26 @@ function PadSynthWindow:gui ()
                             min = -1,
                             max = 1,
                             value = ps.formula_shape,
+                            notifier = function() self:apply_formula() end,
+                        },
+                    },
+
+                    vb:row
+                    {
+                        vb:vertical_aligner
+                        {
+                            mode = "center",
+                            vb:text
+                            {
+                                text = "Scale X Axis: "
+                            },
+                        },
+                        vb:rotary
+                        {
+                            id = "formula_length",
+                            min = -249,
+                            max = 0,
+                            value = ps.formula_length,
                             notifier = function() self:apply_formula() end,
                         },
                     },
@@ -1457,6 +1495,14 @@ function PadSynthWindow:gui ()
                     width = "100%",
                     vb:text { id = "status", text = "PadSynth Opened", height = 24, },
                 },
+            },
+
+            vb:button
+            {
+                id = "do_generate_test",
+                width = 150,
+                height = 26,
+                text = "Generate Test Note",
             },
 
             vb:bitmap
@@ -1566,9 +1612,10 @@ function PadSynthWindow:apply_formula ()
         return
     end
     setfenv(formula, formula_context)
+    local length = vb.views.formula_length.value + 255
     for i = 1, 256 do
         formula_context.i = i
-        formula_context.x = (i - 1) / 255
+        formula_context.x = (i - 1) / length
         local status, val = xpcall(formula,
             function(err)
                 vb.views.formula_error.text = "ERROR: " .. err

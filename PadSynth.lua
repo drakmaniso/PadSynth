@@ -55,7 +55,6 @@ function PadSynth:generate_samples ()
 
     if self.is_test_note then
         self.sample_duration = self.test_duration
-        self.sample_rate = self.test_sample_rate
         self:generate_one_sample (self.test_note, 0, 119, true)
         return
     end
@@ -659,7 +658,6 @@ function PadSynth:initialize_parameters ()
     self.keyzones_step = 12
 
     self.test_note = 48
-    self.test_sample_rate = 44100
     self.test_duration = 0.4
 
     self.base_function = 1
@@ -675,6 +673,7 @@ function PadSynth:initialize_parameters ()
     end
 
     self.formula_string = "return 1 / i"
+    self.formula_length = 0
     self.formula_curvature = 0
     self.formula_torsion = 0
     self.formula_shape = 0
@@ -736,7 +735,6 @@ function PadSynth:save_parameters ()
     name = name .. "keyzones_step=" .. self.keyzones_step .. ", "
 
     name = name .. "test_note=" .. self.test_note .. ", "
-    name = name .. "test_sample_rate = " .. self.test_sample_rate .. ", "
     name = name .. "test_duration=" .. self.test_duration .. ", "
 
     name = name .. "base_function=" .. self.base_function .. ", "
@@ -748,6 +746,7 @@ function PadSynth:save_parameters ()
     name = name .. "}, "
 
     name = name .. "formula_string=\"" .. self.formula_string .. "\", "
+    name = name .. "formula_length=" .. self.formula_length .. ", "
     name = name .. "formula_curvature=" .. self.formula_curvature .. ", "
     name = name .. "formula_torsion=" .. self.formula_torsion .. ", "
     name = name .. "formula_shape=" .. self.formula_shape .. ", "
@@ -824,7 +823,6 @@ function PadSynth:load_parameters ()
     self.keyzones_step = data.keyzones_step
 
     self.test_note = data.test_note
-    self.test_sample_rate = data.test_sample_rate
     self.test_duration = data.test_duration
 
     self.base_function = data.base_function
@@ -833,6 +831,7 @@ function PadSynth:load_parameters ()
 
     self.formula_string = data.formula_string
     self.formula_curvature = data.formula_curvature
+    self.formula_length = data.formula_length
     self.formula_torsion = data.formula_torsion
     self.formula_shape = data.formula_shape
 
