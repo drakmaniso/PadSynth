@@ -1229,6 +1229,11 @@ function PadSynthWindow:gui ()
                     },
                 },
 
+                vb:space
+                {
+                    width = 100,
+                },
+
                 vb:row
                 {
                     vb:vertical_aligner
@@ -1256,14 +1261,14 @@ function PadSynthWindow:gui ()
                         mode = "center",
                         vb:text
                         {
-                            text = "Torsion: "
+                            text = "Curve torsion: "
                         },
                     },
                     vb:rotary
                     {
                         id = "formula_torsion",
-                        min = 0,
-                        max = 2,
+                        min = -1,
+                        max = 1,
                         value = ps.formula_torsion,
                         notifier = function() self:apply_formula() end,
                     },
@@ -1276,7 +1281,7 @@ function PadSynthWindow:gui ()
                         mode = "center",
                         vb:text
                         {
-                            text = "Curve character: "
+                            text = "Curve shape: "
                         },
                     },
                     vb:rotary

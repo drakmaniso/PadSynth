@@ -92,6 +92,11 @@ function curve(x, shape, torsion, curvature)
         curve_b = curve_half_sinusoidal
     end
 
+    if curvature > 0.0 then
+        torsion = -torsion
+    end
+    torsion = torsion + 1.0
+
     if torsion < 1.0 then
         local total_length = 1.0 + torsion
         local orig_a = curve_a(torsion, curvature)
