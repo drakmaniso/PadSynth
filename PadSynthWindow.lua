@@ -514,7 +514,7 @@ function PadSynthWindow:gui ()
                     vb:horizontal_aligner
                     {
                         mode = "center",
-                        vb:text { font = "bold", text = "Overtones" },
+                        vb:text { font = "bold", text = "Overtone Spread" },
                     },
 
                     vb:horizontal_aligner
@@ -591,7 +591,7 @@ function PadSynthWindow:gui ()
                     vb:horizontal_aligner
                     {
                         mode = "center",
-                        vb:text { font = "bold", text = "Overtones Placement" },
+                        vb:text { font = "bold", text = "Overtone Placement" },
                     },
 
                     vb:horizontal_aligner
@@ -1050,77 +1050,96 @@ function PadSynthWindow:gui ()
                 {
                     width = "100%",
                     mode = "justify",
-                    vb:popup
-                    {
-                        id = "formula_presets",
-                        items = 
-                            {
-                                "-- Formula Presets --",
-                                "All Overtones",
-                                "Saw", "Bright Saw", "Extra Bright Saw", "Soft Saw", "Square", "Triangle",
-                                "-- Scale with X --",
-                                "Linear Ramp",
-                                "Cosinus Ramp", "Square Root Ramp", "Log Ramp",
-                                "Triangle Cycle", "Half Cycle", "Square Cycle",
-                                "Cosinus Cycle", "Sinus Cycle", "Many Cycles", "Helix",
-                            },
-                        value = 1,
-                        width = 150,
-                        notifier =
-                            function(choice)
-                                vb.views.formula_presets.value = 1
-                                local items = vb.views.formula_presets.items
-                                if items[choice] == "Sine" then
-                                    vb.views.formula_string.value = "if i == 1 then return 1 else return 0 end"
-                                elseif items[choice] == "All Overtones" then
-                                    vb.views.formula_string.value = "return 1"
-                                elseif items[choice] == "Saw" then
-                                    vb.views.formula_string.value = "return 1 / i"
-                                elseif items[choice] == "Bright Saw" then
-                                    vb.views.formula_string.value = "return sqrt(1 / i)"
-                                elseif items[choice] == "Extra Bright Saw" then
-                                    vb.views.formula_string.value = "return logarithmic(1 / i, 1)"
-                                elseif items[choice] == "Square" then
-                                    vb.views.formula_string.value = "return alternate(i, 1/i, 0)"
-                                elseif items[choice] == "Soft Saw" then
-                                    vb.views.formula_string.value = "return 1 / (i * i)"
-                                elseif items[choice] == "Triangle" then
-                                vb.views.formula_string.value = "return alternate(i, 1 / (i * i), 0)"
-                                elseif items[choice] == "Ramp 8" then
-                                    vb.views.formula_string.value = "length = 8 ; return (length - i)/(length - 1)"
-                                elseif items[choice] == "Ramp 16" then
-                                    vb.views.formula_string.value = "length = 16 ; return (length - i)/(length - 1)"
-                                elseif items[choice] == "Ramp 32" then
-                                    vb.views.formula_string.value = "length = 32 ; return (length - i)/(length - 1)"
-                                elseif items[choice] == "Ramp 64" then
-                                    vb.views.formula_string.value = "length = 64 ; return (length - i)/(length - 1)"
-                                elseif items[choice] == "Cosinus Ramp" then
-                                    vb.views.formula_string.value = "if x <= 1 then return cos(x * pi/2) else return 0 end"
-                                elseif items[choice] == "Linear Ramp" then
-                                    vb.views.formula_string.value = "return 1 - x"
-                                elseif items[choice] == "Square Root Ramp" then
-                                    vb.views.formula_string.value = "return 1 - sqrt(x)"
-                                elseif items[choice] == "Log Ramp" then
-                                    vb.views.formula_string.value = "return 1 - log10(1+10*x)"
-                                elseif items[choice] == "Triangle Cycle" then
-                                    vb.views.formula_string.value = "return abs(x % 1 - 0.5)"
-                                elseif items[choice] == "Square Cycle" then
-                                    vb.views.formula_string.value = "return (x % 1) < 0.5 and 1 or 0"
-                                elseif items[choice] == "Half Cycle" then
-                                    vb.views.formula_string.value = "return 1 - (x % 1)"
-                                elseif items[choice] == "Cosinus Cycle" then
-                                    vb.views.formula_string.value = "return (1 + cos(x * pi))/ 2"
-                                elseif items[choice] == "Sinus Cycle" then
-                                    vb.views.formula_string.value = "return (1 + sin(x * pi ))/ 2"
-                                elseif items[choice] == "Many Cycles" then
-                                    vb.views.formula_string.value = "nb = 16; return (1 + cos(x * (2 * nb + 1) * pi))/ 2"
-                                elseif items[choice] == "Helix" then
-                                    vb.views.formula_string.value = "nb = 32000; return (1 + cos(x * (2 * nb + 1) * pi))/ 2"
-                                end
-                            end
-                    },
 
-                    vb:row{},
+                    vb:row
+                    {
+                        margin = 0,
+                        spacing = 2 * dialog_spacing,
+                        height = "100%",
+                        vb:vertical_aligner
+                        {
+                            mode = "center",
+                            vb:text
+                            {
+                                text = "Overtone Formula",
+                                font = "bold",
+                            },
+                        },
+
+                        vb:vertical_aligner
+                        {
+                            mode = "center",
+                            vb:popup
+                            {
+                                id = "formula_presets",
+                                items = 
+                                    {
+                                        "-- Presets --",
+                                        "All Overtones",
+                                        "Saw", "Bright Saw", "Extra Bright Saw", "Soft Saw", "Square", "Triangle",
+                                        "-- Scale with X --",
+                                        "Linear Ramp",
+                                        "Cosinus Ramp", "Square Root Ramp", "Log Ramp",
+                                        "Triangle Cycle", "Half Cycle", "Square Cycle",
+                                        "Cosinus Cycle", "Sinus Cycle", "Many Cycles", "Helix",
+                                    },
+                                value = 1,
+                                width = 150,
+                                notifier =
+                                    function(choice)
+                                        vb.views.formula_presets.value = 1
+                                        local items = vb.views.formula_presets.items
+                                        if items[choice] == "Sine" then
+                                            vb.views.formula_string.value = "if i == 1 then return 1 else return 0 end"
+                                        elseif items[choice] == "All Overtones" then
+                                            vb.views.formula_string.value = "return 1"
+                                        elseif items[choice] == "Saw" then
+                                            vb.views.formula_string.value = "return 1 / i"
+                                        elseif items[choice] == "Bright Saw" then
+                                            vb.views.formula_string.value = "return sqrt(1 / i)"
+                                        elseif items[choice] == "Extra Bright Saw" then
+                                            vb.views.formula_string.value = "return logarithmic(1 / i, 1)"
+                                        elseif items[choice] == "Square" then
+                                            vb.views.formula_string.value = "return alternate(i, 1/i, 0)"
+                                        elseif items[choice] == "Soft Saw" then
+                                            vb.views.formula_string.value = "return 1 / (i * i)"
+                                        elseif items[choice] == "Triangle" then
+                                        vb.views.formula_string.value = "return alternate(i, 1 / (i * i), 0)"
+                                        elseif items[choice] == "Ramp 8" then
+                                            vb.views.formula_string.value = "length = 8 ; return (length - i)/(length - 1)"
+                                        elseif items[choice] == "Ramp 16" then
+                                            vb.views.formula_string.value = "length = 16 ; return (length - i)/(length - 1)"
+                                        elseif items[choice] == "Ramp 32" then
+                                            vb.views.formula_string.value = "length = 32 ; return (length - i)/(length - 1)"
+                                        elseif items[choice] == "Ramp 64" then
+                                            vb.views.formula_string.value = "length = 64 ; return (length - i)/(length - 1)"
+                                        elseif items[choice] == "Cosinus Ramp" then
+                                            vb.views.formula_string.value = "if x <= 1 then return cos(x * pi/2) else return 0 end"
+                                        elseif items[choice] == "Linear Ramp" then
+                                            vb.views.formula_string.value = "return 1 - x"
+                                        elseif items[choice] == "Square Root Ramp" then
+                                            vb.views.formula_string.value = "return 1 - sqrt(x)"
+                                        elseif items[choice] == "Log Ramp" then
+                                            vb.views.formula_string.value = "return 1 - log10(1+10*x)"
+                                        elseif items[choice] == "Triangle Cycle" then
+                                            vb.views.formula_string.value = "return abs(x % 1 - 0.5)"
+                                        elseif items[choice] == "Square Cycle" then
+                                            vb.views.formula_string.value = "return (x % 1) < 0.5 and 1 or 0"
+                                        elseif items[choice] == "Half Cycle" then
+                                            vb.views.formula_string.value = "return 1 - (x % 1)"
+                                        elseif items[choice] == "Cosinus Cycle" then
+                                            vb.views.formula_string.value = "return (1 + cos(x * pi))/ 2"
+                                        elseif items[choice] == "Sinus Cycle" then
+                                            vb.views.formula_string.value = "return (1 + sin(x * pi ))/ 2"
+                                        elseif items[choice] == "Many Cycles" then
+                                            vb.views.formula_string.value = "nb = 16; return (1 + cos(x * (2 * nb + 1) * pi))/ 2"
+                                        elseif items[choice] == "Helix" then
+                                            vb.views.formula_string.value = "nb = 32000; return (1 + cos(x * (2 * nb + 1) * pi))/ 2"
+                                        end
+                                    end
+                            },
+                        },
+                    },
 
                     vb:row
                     {
@@ -1293,6 +1312,11 @@ function PadSynthWindow:gui ()
                             end
                     },
 
+                    vb:space
+                    {
+                        width = 4 * control_spacing,
+                    },
+
                     vb:button
                     {
                         text = " * Random ",
@@ -1327,6 +1351,11 @@ function PadSynthWindow:gui ()
                                 end
                                 self:update_harmonics_sliders()
                             end
+                    },
+
+                    vb:space
+                    {
+                        width = 4 * control_spacing,
                     },
 
                     vb:button
@@ -1369,6 +1398,11 @@ function PadSynthWindow:gui ()
                             end
                     },
 
+                    vb:space
+                    {
+                        width = 4 * control_spacing,
+                    },
+
                     vb:button
                     {
                         text = " Invert ",
@@ -1402,23 +1436,6 @@ function PadSynthWindow:gui ()
                 vb:row
                 {
 
-                    vb:button
-                    {
-                        text = "Take Output!",
-                        notifier =
-                            function()
-                                for i = 1, 256 do
-                                    self.harmonics[i] = self.harmonics_output[i]
-                                end
-                                vb.views.formula_string.value = "return 1"
-                                vb.views.formula_curvature.value = 0
-                                vb.views.formula_torsion.value = 0
-                                vb.views.formula_shape.value = 0
-                                vb.views.formula_length.value = 0
-                                self:update_harmonics_sliders()
-                            end
-                    },
-
                 },
 
                 vb:switch
@@ -1451,8 +1468,8 @@ function PadSynthWindow:gui ()
             style = "invisible",
             vb:horizontal_aligner
             {
-                mode = "center",
-                spacing = 0,
+                mode = "justify",
+                spacing = dialog_spacing,
                 margin = 0,
                 vb:row
                 {
@@ -1461,7 +1478,60 @@ function PadSynthWindow:gui ()
                     spacing = 0,
                     margin = 2,
                     height = 104,
-                }
+                },
+                vb:vertical_aligner
+                {
+                    mode = "center",
+                    margin = 0,
+                    spacing = 0,
+                    vb:column
+                    {
+                        style = "group",
+                        margin = dialog_margin,
+                        spacing = dialog_spacing,
+                        width = 200,
+                        uniform = true,
+                        vb:button
+                        {
+                            width = "100%",
+                            text = " Send to Formula ",
+                            notifier =
+                                function ()
+                                    local formula = "local h = {"
+                                    for i = 1, 256 do
+                                        formula = formula .. "[" .. i .. "]=" .. self.harmonics_output[i] .. ","
+                                    end
+                                    formula = formula .. "}; return h[i]"
+                                    vb.views.formula_string.value = formula
+                                    for i = 1, 256 do
+                                        self.harmonics[i] = 1
+                                    end
+                                    vb.views.formula_curvature.value = 0
+                                    vb.views.formula_torsion.value = 0
+                                    vb.views.formula_shape.value = 0
+                                    vb.views.formula_length.value = 0
+                                    self:update_harmonics_sliders()
+                                end
+                        },
+                        vb:button
+                        {
+                            width = "100%",
+                            text = " Send to Sliders ",
+                            notifier =
+                                function()
+                                    for i = 1, 256 do
+                                        self.harmonics[i] = self.harmonics_output[i]
+                                    end
+                                    vb.views.formula_string.value = "return 1"
+                                    vb.views.formula_curvature.value = 0
+                                    vb.views.formula_torsion.value = 0
+                                    vb.views.formula_shape.value = 0
+                                    vb.views.formula_length.value = 0
+                                    self:update_harmonics_sliders()
+                                end
+                        },
+                    },
+                },
             },
         }, -- Output
 
