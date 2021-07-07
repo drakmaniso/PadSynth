@@ -636,8 +636,8 @@ function PadSynth:initialize_parameters ()
     self.new_note_action = 2
     self.interpolation = 4
     self.oversample_enabled = true
-    self.modulation_set_index = 1
-    self.device_chain_index = 0
+    self.modulation_set_index = 2
+    self.device_chain_index = 1
 
     self.overtones_placement = 1
     self.overtones_treshold = 1
@@ -660,7 +660,7 @@ function PadSynth:initialize_parameters ()
     self.keyzones_step = 12
 
     self.test_note = 48
-    self.test_duration = 0.4
+    self.test_duration = 0.25
 
     self.base_function = 1
 
@@ -674,7 +674,7 @@ function PadSynth:initialize_parameters ()
         self.harmonics_output[i] = 1/i
     end
 
-    self.formula_string = "return 1 / i"
+    self.formula_string = "1 / i"
     self.formula_length = 0
     self.formula_curvature = 0
     self.formula_torsion = 0
@@ -749,7 +749,7 @@ function PadSynth:save_parameters ()
     end
     name = name .. "}, "
 
-    name = name .. "formula_string=\"" .. self.formula_string .. "\", "
+    name = name .. "formula_string=[[" .. self.formula_string .. "]], "
     name = name .. "formula_length=" .. self.formula_length .. ", "
     name = name .. "formula_curvature=" .. self.formula_curvature .. ", "
     name = name .. "formula_torsion=" .. self.formula_torsion .. ", "
