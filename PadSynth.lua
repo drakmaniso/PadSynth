@@ -636,6 +636,8 @@ function PadSynth:initialize_parameters ()
     self.new_note_action = 2
     self.interpolation = 4
     self.oversample_enabled = true
+    self.modulation_set_index = 1
+    self.device_chain_index = 0
 
     self.overtones_placement = 1
     self.overtones_treshold = 1
@@ -713,6 +715,8 @@ function PadSynth:save_parameters ()
     name = name .. "new_note_action=" .. self.new_note_action .. ", "
     name = name .. "interpolation=" .. self.interpolation .. ", "
     name = name .. "oversample_enabled=" .. (self.oversample_enabled and "true" or "false") .. ", "
+    name = name .. "modulation_set_index=" .. self.modulation_set_index .. ", "
+    name = name .. "device_chain_index=" .. self.device_chain_index .. ", "
 
     name = name .. "overtones_placement=" .. self.overtones_placement .. ", "
     name = name .. "overtones_treshold=" .. self.overtones_treshold .. ", "
@@ -795,6 +799,8 @@ function PadSynth:load_parameters ()
     self.autofade = data.autofade
     self.new_note_action = data.new_note_action
     self.interpolation = data.interpolation
+    self.modulation_set_index = data.modulation_set_index
+    self.device_chain_index = data.device_chain_index
 
     self.overtones_placement = data.overtones_placement
     self.overtones_param1 = data.overtones_param1
@@ -844,7 +850,9 @@ function PadSynth:load_parameters ()
         self.autofade = self.autofade == 2
         self.interpolation = 4
         self.oversample_enabled = true
-        --TODO: self.version = 4
+        self.modulation_set_index = 1
+        self.device_chain_index = 0
+        self.version = 4
     end
 
 end

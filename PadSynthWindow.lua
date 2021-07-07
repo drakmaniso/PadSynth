@@ -27,8 +27,6 @@ function PadSynthWindow:__init (pad_synth)
     self.formula_torsion = pad_synth.formula_torsion
     self.formula_shape = pad_synth.formula_shape
 
-    self.formula_preset_choice = false
-
 end
 
 
@@ -47,6 +45,8 @@ function PadSynthWindow:update_parameters ()
     self.pad_synth.new_note_action = views.new_note_action.value
     self.pad_synth.interpolation = views.interpolation.value
     self.pad_synth.oversample_enabled = views.oversample_enabled.value
+    self.pad_synth.modulation_set_index = views.modulation_set_index.value
+    self.pad_synth.device_chain_index = views.device_chain_index.value
 
     self.pad_synth.overtones_placement = views.overtones_placement.value
     self.pad_synth.overtones_treshold = views.overtones_treshold.value
@@ -124,6 +124,17 @@ setmetatable(formula_context, {__index = math})
 
 
 function PadSynthWindow:show_dialog ()
+
+    self.modulation_sets = {}
+    self.modulation_sets[1] = "None"
+    for i,v in ipairs(self.pad_synth.instrument.sample_modulation_sets) do
+        self.modulation_sets[i+1] = self.pad_synth.instrument.sample_modulation_sets[i].name
+    end
+    self.device_chains = {}
+    self.device_chains[1] = "None"
+    for i,v in ipairs(self.pad_synth.instrument.sample_device_chains) do
+        self.device_chains[i+1] = self.pad_synth.instrument.sample_device_chains[i].name
+    end
 
     if self.dialog and self.dialog.visible then
         self.dialog:show ()
@@ -430,7 +441,7 @@ function PadSynthWindow:gui ()
                 {
                     style = "group",
                     margin = control_margin,
-                    spacing = dialog_spacing,
+                    spacing = control_spacing,
                     height = "100%",
 
                     vb:horizontal_aligner
@@ -442,13 +453,16 @@ function PadSynthWindow:gui ()
                     vb:horizontal_aligner
                     {
                         mode = "distribute",
-
+                        width = "100%",
                         vb:column
                         {
                             uniform = true,
+                            margin = 0,
+                            vb:text { text = "Volume", align= "center", },
                             vb:horizontal_aligner
                             {
                                 mode = "center",
+                                margin = 0,
                                 vb:rotary
                                 {
                                     id = "volume_rotary",
@@ -470,12 +484,13 @@ function PadSynthWindow:gui ()
                                     end
                                 end
                             },
-                            vb:text { text = "Volume", align= "center", },
                         },
 
                         vb:column
                         {
                             uniform = true,
+                            margin = 0,
+                            vb:text { text = "Duration", align= "center", },
                             vb:horizontal_aligner
                             {
                                 mode = "center",
@@ -495,10 +510,58 @@ function PadSynthWindow:gui ()
                                 tonumber = tonumber,
                                 tostring = function (v) return string.format ("%.2f s", v) end,
                             },
-                            vb:text { text = "Duration", align= "center", },
                             tooltip = "Length of the wavetable",
                         },
                     },
+
+                    vb:horizontal_aligner
+                    {
+                        mode = "justify",
+                        vb:row
+                        {
+                            margin = 0,
+                            spacing = 0,
+                            vb:text { text = "Mod" },
+                            vb:popup
+                            {
+                                width = "75%",
+                                id = "modulation_set_index",
+                                items = self.modulation_sets,
+                                value = ps.modulation_set_index + 1,
+                                notifier = function ()
+                                    for i, sample in ipairs (ps.instrument.samples) do
+                                        if string.sub (sample.name, 1, 13) == "PadSynth Note" then
+                                            sample.modulation_set_index = vb.views.modulation_set_index.value - 1
+                                        end
+                                    end
+                                end,
+                                -- tooltip = "Define what happens when a new note is triggered in the same column\nCut: the previous note is interrupted (without release)\nNote Off: the previous note ends normally (play the release part of the envelope)\nContinue: the previous note is held",
+                                },
+                        },
+
+                        vb:row
+                        {
+                            margin = 0,
+                            spacing = 0,
+                            vb:text { text = "FX" },
+                            vb:popup
+                            {
+                                width = "75%",
+                                id = "device_chain_index",
+                                items = self.device_chains,
+                                value = ps.device_chain_index + 1,
+                                notifier = function ()
+                                    for i, sample in ipairs (ps.instrument.samples) do
+                                        if string.sub (sample.name, 1, 13) == "PadSynth Note" then
+                                            sample.device_chain_index = vb.views.device_chain_index.value - 1
+                                        end
+                                    end
+                                end,
+                                -- tooltip = "Define what happens when a new note is triggered in the same column\nCut: the previous note is interrupted (without release)\nNote Off: the previous note ends normally (play the release part of the envelope)\nContinue: the previous note is held",
+                            }, 
+                        },
+                    },
+
                 }, -- Global
 
                 -- Overtones Spread --------------------------------------------------------------------------------------------------------------------------------
@@ -532,9 +595,10 @@ function PadSynthWindow:gui ()
                     vb:horizontal_aligner
                     {
                         mode = "distribute",
-
                         vb:column
                         {
+                            margin = 0,
+                            vb:text { text = "Spread", align = "center", width = 60, },
                             vb:horizontal_aligner
                             {
                                 mode = "center",
@@ -551,12 +615,13 @@ function PadSynthWindow:gui ()
                                 tonumber = tonumber,
                                 tostring = function (v) return string.format ("%d ct", v) end,
                             },
-                            vb:text { text = "Spread", align = "center", width = 60, },
                             tooltip = 'Controls how much each overtone is "spread"\naround its frequency'
                         },
 
                         vb:column
                         {
+                            margin = 0,
+                            vb:text { text = "Growth", align = "center", width = 60, },
                             vb:horizontal_aligner
                             {
                                 mode = "center",
@@ -573,7 +638,6 @@ function PadSynthWindow:gui ()
                                 tonumber = tonumber,
                                 tostring = function (v) return string.format ("%.2f", v) end,
                             },
-                            vb:text { text = "Growth", align = "center", width = 60, },
                             tooltip = 'Controls how much the spread grows\nfor higher frequencies',
                         },
                     },
@@ -611,10 +675,10 @@ function PadSynthWindow:gui ()
                     vb:horizontal_aligner
                     {
                         mode = "distribute",
-
-
                         vb:column
                         {
+                            margin = 0,
+                            vb:text { id = "param1_label", text = "-", align = "center", width = 60, },
                             vb:horizontal_aligner
                             {
                                 mode = "center",
@@ -628,13 +692,16 @@ function PadSynthWindow:gui ()
                             {
                                 id = "param1", value = ps.overtones_param1, min = 0, max = 1, align = "center",
                                 notifier = function () vb.views.param1_rotary.value = vb.views.param1.value end,
-                            active=false},
-                            vb:text { id = "param1_label", text = "-", align = "center", width = 60, },
-                        visible = false},
+                                active=false
+                            },
+                            visible = false
+                        },
 
 
                         vb:column
                         {
+                            margin = 0,
+                            vb:text { id = "param2_label", text = "-", align = "center", width = 60, },
                             vb:horizontal_aligner
                             {
                                 mode = "center",
@@ -642,18 +709,22 @@ function PadSynthWindow:gui ()
                                 {
                                     id = "param2_rotary", value = ps.overtones_param2, min = 0, max = 1,
                                     notifier = function () vb.views.param2.value = vb.views.param2_rotary.value end,
-                                active=false},
+                                    active=false
+                                },
                             },
                             vb:valuefield
                             {
                                 id = "param2", value = ps.overtones_param2, min = 0, max = 1, align = "center",
                                 notifier = function () vb.views.param2_rotary.value = vb.views.param2.value end,
-                            active=false},
-                            vb:text { id = "param2_label", text = "-", align = "center", width = 60, },
-                        visible = false},
+                                active=false
+                            },
+                            visible = false
+                        },
 
                         vb:column
                         {
+                            margin = 0,
+                            vb:text { id = "overtones_treshold_label", text = "-", align = "center", width = 60, },
                             vb:horizontal_aligner
                             {
                                 mode = "center",
@@ -670,12 +741,13 @@ function PadSynthWindow:gui ()
                                 tonumber = function (v) return tonumber(v) end,
                                 tostring = function (v) return string.format ("%d", v) end,
                             },
-                            vb:text { id = "overtones_treshold_label", text = "-", align = "center", width = 60, },
                             tooltip = "Treshold: define at which harmonic start the placement method\nPeriod: for the Waved placement, define the length of the waves"
                         },
 
                         vb:column
                         {
+                            margin = 0,
+                            vb:text { id = "overtones_amount_label", text = "-", align = "center", width = 60, },
                             vb:horizontal_aligner
                             {
                                 mode = "center",
@@ -692,13 +764,14 @@ function PadSynthWindow:gui ()
                                 tonumber = tonumber,
                                 tostring = function (v) return string.format ("%.2f", v) end,
                             },
-                            vb:text { id = "overtones_amount_label", text = "-", align = "center", width = 60, },
                             tooltip = "Define how much deformation is applied to the placement",
                         },
 
 
                         vb:column
                         {
+                            margin = 0,
+                            vb:text { id = "overtones_harmonize_label", text = "-", align = "center", width = 60, },
                             vb:horizontal_aligner
                             {
                                 mode = "center",
@@ -715,7 +788,6 @@ function PadSynthWindow:gui ()
                                 tonumber = function (v) return tonumber (v / 100) end,
                                 tostring = function (v) return string.format ("%d %%", v * 100) end,
                             active=false},
-                            vb:text { id = "overtones_harmonize_label", text = "-", align = "center", width = 60, },
                             tooltip = "Shift overtones toward harmonic positions",
                         },
                     },
@@ -1044,8 +1116,8 @@ function PadSynthWindow:gui ()
             {
                 width = "100%",
                 uniform = true,
-                margin = dialog_margin,
-                spacing = dialog_spacing,
+                margin = control_margin,
+                spacing = control_spacing,
                 vb:horizontal_aligner
                 {
                     width = "100%",
@@ -1256,14 +1328,14 @@ function PadSynthWindow:gui ()
         vb:column
         {
             width = full_width,
-            margin = dialog_margin,
+            margin = control_margin,
             spacing = 0,
             style = "group",
 
             vb:horizontal_aligner
             {
-                margin = dialog_margin,
-                spacing = dialog_spacing,
+                margin = 0,
+                spacing = control_spacing,
                 mode = "justify",
 
                 vb:row
@@ -1469,7 +1541,7 @@ function PadSynthWindow:gui ()
             vb:horizontal_aligner
             {
                 mode = "justify",
-                spacing = dialog_spacing,
+                spacing = control_spacing,
                 margin = 0,
                 vb:row
                 {
@@ -1487,8 +1559,8 @@ function PadSynthWindow:gui ()
                     vb:column
                     {
                         style = "group",
-                        margin = dialog_margin,
-                        spacing = dialog_spacing,
+                        margin = control_margin,
+                        spacing = control_spacing,
                         width = 200,
                         uniform = true,
                         vb:button
@@ -1541,13 +1613,13 @@ function PadSynthWindow:gui ()
         vb:column
         {
             width = full_width,
-            margin = dialog_margin,
+            margin = control_margin,
             spacing = 0,
             vb:horizontal_aligner
             {
                 mode = "distribute",
-                margin = dialog_margin,
-                spacing = dialog_margin,
+                margin = 0,
+                spacing = control_margin,
                 height = 26,
                 width = "100%",
 
