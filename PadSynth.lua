@@ -835,24 +835,32 @@ function PadSynth:load_parameters ()
 
     self.harmonics = data.harmonics
 
-    self.formula_string = data.formula_string
+    if data.formula_string then
+        self.formula_string = data.formula_string
+    else
+        self.formula_string = "1"
+    end
     self.formula_curvature = data.formula_curvature
     self.formula_length = data.formula_length
     self.formula_torsion = data.formula_torsion
     self.formula_shape = data.formula_shape
 
-    if self.version == 0 then
+    if self.version < 1 then
         self.bandwidth_growth = 1
         self.version = 1
     end
 
-    if self.version == 3 then
+    if self.version < 4 then
         self.autofade = self.autofade == 2
         self.interpolation = 4
         self.oversample_enabled = true
         self.modulation_set_index = 1
         self.device_chain_index = 0
         self.version = 4
+    end
+
+    if self.version < 5 then
+        self.formula_string = "1"
     end
 
 end

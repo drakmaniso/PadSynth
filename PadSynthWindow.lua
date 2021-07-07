@@ -144,10 +144,17 @@ function PadSynthWindow:show_dialog ()
     for i,v in ipairs(self.pad_synth.instrument.sample_modulation_sets) do
         self.modulation_sets[i+1] = self.pad_synth.instrument.sample_modulation_sets[i].name
     end
+    if self.vb.views.modulation_set_index then
+        self.vb.views.modulation_set_index.value = clamp(self.pad_synth.modulation_set_index, 1, #self.modulation_sets)
+    end
+
     self.device_chains = {}
     self.device_chains[1] = "None"
     for i,v in ipairs(self.pad_synth.instrument.sample_device_chains) do
         self.device_chains[i+1] = self.pad_synth.instrument.sample_device_chains[i].name
+    end
+    if self.vb.views.device_chain_index then
+        self.vb.views.device_chain_index.value = clamp(self.pad_synth.device_chain_index, 1, #self.device_chains)
     end
 
     if self.dialog and self.dialog.visible then
@@ -541,7 +548,7 @@ function PadSynthWindow:gui ()
                                 width = "75%",
                                 id = "modulation_set_index",
                                 items = self.modulation_sets,
-                                value = ps.modulation_set_index,
+                                value = clamp(ps.modulation_set_index, 1, #self.modulation_sets),
                                 notifier = function ()
                                     for i, sample in ipairs (ps.instrument.samples) do
                                         if string.sub (sample.name, 1, 13) == "PadSynth Note" then
@@ -563,7 +570,7 @@ function PadSynthWindow:gui ()
                                 width = "75%",
                                 id = "device_chain_index",
                                 items = self.device_chains,
-                                value = ps.device_chain_index,
+                                value = clamp(ps.device_chain_index, 1, #self.device_chains),
                                 notifier = function ()
                                     for i, sample in ipairs (ps.instrument.samples) do
                                         if string.sub (sample.name, 1, 13) == "PadSynth Note" then
