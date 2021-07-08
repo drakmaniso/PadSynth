@@ -1,4 +1,5 @@
-_AUTO_RELOAD_DEBUG = function() end
+_AUTO_RELOAD_DEBUG = function()
+end
 
 math.randomseed(os.clock())
 
@@ -6,17 +7,19 @@ require "PadSynth"
 
 -------------------------------------------------------------------------------
 
-local function open_or_create()
+renoise.tool():add_menu_entry {
+    name = "Instrument Box:PadSynth Instrument...",
+    invoke = function()
+        PadSynth(renoise.song().selected_instrument)
+    end
+}
 
-    local instrument = renoise.song().selected_instrument
-
-    PadSynth(instrument)
-
-end
-
-renoise.tool():add_menu_entry{name = "Instrument Box:PadSynth Instrument...", invoke = function() open_or_create() end}
-
-renoise.tool():add_keybinding{name = "Global:Tools:PadSynth Instrument...", invoke = function() open_or_create() end}
+renoise.tool():add_keybinding {
+    name = "Global:Tools:PadSynth Instrument...",
+    invoke = function()
+        PadSynth(renoise.song().selected_instrument)
+    end
+}
 
 -------------------------------------------------------------------------------
 
@@ -29,11 +32,17 @@ local function on_app_idle()
     if in_progress_coroutine then
         local status = coroutine.status(in_progress_coroutine)
         if status == "suspended" then
-            if in_progress_feedback_function then in_progress_feedback_function() end
+            if in_progress_feedback_function then
+                in_progress_feedback_function()
+            end
             local ok, msg = coroutine.resume(in_progress_coroutine)
-            if not ok then print(msg) end
+            if not ok then
+                print(msg)
+            end
         elseif status == "dead" then
-            if in_progress_finished_function then in_progress_finished_function() end
+            if in_progress_finished_function then
+                in_progress_finished_function()
+            end
             if renoise.tool().app_idle_observable:has_notifier(on_app_idle) then
                 renoise.tool().app_idle_observable:remove_notifier(on_app_idle)
             end
@@ -70,6 +79,8 @@ function in_progress_abort()
     in_progress_finished_function = nil
 end
 
-function is_in_progress() return in_progress_coroutine ~= nil end
+function is_in_progress()
+    return in_progress_coroutine ~= nil
+end
 
 -------------------------------------------------------------------------------

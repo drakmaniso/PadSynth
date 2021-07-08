@@ -5,29 +5,30 @@ local status = nil
 -------------------------------------------------------------------------------
 
 function PadSynthWindow:__init(pad_synth)
-
     self.vb = renoise.ViewBuilder()
 
     self.pad_synth = pad_synth
 
     self.harmonics = {}
-    for i, v in ipairs(pad_synth.harmonics) do self.harmonics[i] = v end
+    for i, v in ipairs(pad_synth.harmonics) do
+        self.harmonics[i] = v
+    end
 
     self.harmonics_output = {}
-    for i, v in ipairs(pad_synth.harmonics_output) do self.harmonics_output[i] = v end
+    for i, v in ipairs(pad_synth.harmonics_output) do
+        self.harmonics_output[i] = v
+    end
 
     self.formula_custom_string = pad_synth.formula_custom_string
     self.formula_length = pad_synth.formula_length
     self.formula_curvature = pad_synth.formula_curvature
     self.formula_torsion = pad_synth.formula_torsion
     self.formula_shape = pad_synth.formula_shape
-
 end
 
 -------------------------------------------------------------------------------
 
 function PadSynthWindow:update_parameters()
-
     local views = self.vb.views
 
     self.pad_synth.volume = views.volume.value
@@ -73,14 +74,15 @@ function PadSynthWindow:update_parameters()
     end
 
     self.pad_synth.harmonics_output = {}
-    for i = 1, 256 do self.pad_synth.harmonics_output[i] = self.harmonics_output[i] end
+    for i = 1, 256 do
+        self.pad_synth.harmonics_output[i] = self.harmonics_output[i]
+    end
 
     self.pad_synth.formula_string = views.formula_string.value
     self.pad_synth.formula_curvature = views.formula_curvature.value
     self.pad_synth.formula_length = views.formula_length.value
     self.pad_synth.formula_torsion = views.formula_torsion.value
     self.pad_synth.formula_shape = views.formula_shape.value
-
 end
 
 -------------------------------------------------------------------------------
@@ -88,25 +90,40 @@ end
 local formula_context = {
     i = 0,
     x = 0,
-
     alternate = function(i, ...)
         local args = {...}
         local j = i % #args
-        if j == 0 then j = #args end
+        if j == 0 then
+            j = #args
+        end
         return args[j]
     end,
-
-    curve = function(x, curvature, torsion, shape) return curve(x, shape, torsion, curvature) end,
-    exponential = function(...) return curve_exponential(...) end,
-    logarithmic = function(...) return curve_logarithmic(...) end,
-    circular = function(...) return curve_circular(...) end,
-    half_sinusoidal = function(...) return curve_half_sinusoidal(...) end,
-    sinusoidal = function(...) return curve_sinusoidal(...) end,
-    arcsinusoidal = function(...) return curve_arcsinusoidal(...) end,
+    curve = function(x, curvature, torsion, shape)
+        return curve(x, shape, torsion, curvature)
+    end,
+    exponential = function(...)
+        return curve_exponential(...)
+    end,
+    logarithmic = function(...)
+        return curve_logarithmic(...)
+    end,
+    circular = function(...)
+        return curve_circular(...)
+    end,
+    half_sinusoidal = function(...)
+        return curve_half_sinusoidal(...)
+    end,
+    sinusoidal = function(...)
+        return curve_sinusoidal(...)
+    end,
+    arcsinusoidal = function(...)
+        return curve_arcsinusoidal(...)
+    end
 }
 setmetatable(formula_context, {__index = math})
 
-local formula_documentation = [[
+local formula_documentation =
+    [[
 Any valid Lua expression.
 
 Variables:
@@ -122,7 +139,6 @@ Functions:
 -------------------------------------------------------------------------------
 
 function PadSynthWindow:show_dialog()
-
     self.modulation_sets = {}
     self.modulation_sets[1] = "None"
     for i, v in ipairs(self.pad_synth.instrument.sample_modulation_sets) do
@@ -146,27 +162,24 @@ function PadSynthWindow:show_dialog()
         return
     end
 
-    if not self.dialog_content then self.dialog_content = self:gui() end
+    if not self.dialog_content then
+        self.dialog_content = self:gui()
+    end
 
-    local kh = function(d, k) return self:key_handler(d, k) end
+    local kh = function(d, k)
+        return self:key_handler(d, k)
+    end
     self.dialog = renoise.app():show_custom_dialog("PadSynth", self.dialog_content, kh)
-
 end
 
 -------------------------------------------------------------------------------
 
 function PadSynthWindow:key_handler(dialog, key)
-
     if key.modifiers == "" and key.name == "esc" then
-
         dialog:close()
-
     else
-
         return key
-
     end
-
 end
 
 -------------------------------------------------------------------------------
@@ -182,7 +195,6 @@ PadSynthWindow.nb_channels_names = {"Mono", "Stereo"}
 -------------------------------------------------------------------------------
 
 function PadSynthWindow:generate_samples()
-
     self:update_parameters()
     self.pad_synth.is_test_note = false
 
@@ -197,12 +209,16 @@ function PadSynthWindow:generate_samples()
     views.do_generate_test:add_released_notifier(self, PadSynthWindow.cancel_generation)
     views.do_generate_test.text = "Cancel"
     in_progress_start(
-        function() self.pad_synth:generate_samples() end, function()
+        function()
+            self.pad_synth:generate_samples()
+        end,
+        function()
             views.status.text = "Generating samples: Step " .. counter
             views.progress_bitmap.bitmap = "data/progress-" .. math.floor(counter % 8) .. ".png"
             views.progress_bitmap.mode = "transparent"
             counter = counter + 1
-        end, function()
+        end,
+        function()
             views.status.text = "Samples generated."
             views.progress_bitmap.bitmap = "data/progress-empty.png"
             views.progress_bitmap.mode = "transparent"
@@ -212,14 +228,13 @@ function PadSynthWindow:generate_samples()
             views.do_generate_test.text = "Generate Test Note"
             views.do_generate_test:remove_released_notifier(self, PadSynthWindow.cancel_generation)
             views.do_generate_test:add_released_notifier(self, PadSynthWindow.generate_test_note)
-        end)
-
+        end
+    )
 end
 
 -------------------------------------------------------------------------------
 
 function PadSynthWindow:generate_test_note()
-
     self:update_parameters()
     self.pad_synth.is_test_note = true
 
@@ -234,12 +249,16 @@ function PadSynthWindow:generate_test_note()
     views.do_generate_test:add_released_notifier(self, PadSynthWindow.cancel_generation)
     views.do_generate_test.text = "Cancel"
     in_progress_start(
-        function() self.pad_synth:generate_samples() end, function()
+        function()
+            self.pad_synth:generate_samples()
+        end,
+        function()
             views.status.text = "Generating test note: Step " .. counter
             views.progress_bitmap.bitmap = "data/progress-" .. math.floor(counter % 8) .. ".png"
             views.progress_bitmap.mode = "transparent"
             counter = counter + 1
-        end, function()
+        end,
+        function()
             views.status.text = "Test note generated."
             views.progress_bitmap.bitmap = "data/progress-empty.png"
             views.progress_bitmap.mode = "transparent"
@@ -249,14 +268,13 @@ function PadSynthWindow:generate_test_note()
             views.do_generate_test.text = "Generate Test Note"
             views.do_generate_test:remove_released_notifier(self, PadSynthWindow.cancel_generation)
             views.do_generate_test:add_released_notifier(self, PadSynthWindow.generate_test_note)
-        end)
-
+        end
+    )
 end
 
 -------------------------------------------------------------------------------
 
 function PadSynthWindow:cancel_generation()
-
     in_progress_abort()
     self.vb.views.status.text = "Sample generation aborted."
     self.vb.views.progress_bitmap.bitmap = "data/progress-empty.png"
@@ -267,20 +285,17 @@ function PadSynthWindow:cancel_generation()
     self.vb.views.do_generate_test.text = "Generate Test Note"
     self.vb.views.do_generate_test:remove_released_notifier(self, PadSynthWindow.cancel_generation)
     self.vb.views.do_generate_test:add_released_notifier(self, PadSynthWindow.generate_test_note)
-
 end
 
 -------------------------------------------------------------------------------
 
 local function to_note_string(v)
-
     local octave = math.floor(v / 12)
     local note = v % 12 + 1
     local note_names = {"C-", "C#", "D-", "D#", "E-", "F-", "F#", "G-", "G#", "A-", "A#", "B-"}
     local note_name = note_names[note]
 
     return note_name .. octave
-
 end
 
 local note_numbers = {
@@ -307,27 +322,28 @@ local note_numbers = {
     ["g#"] = 8,
     ["a-"] = 9,
     ["a#"] = 10,
-    ["b-"] = 11,
+    ["b-"] = 11
 }
 
 local function to_note_number(v)
-
     local note_name, octave_name = string.match(v, "([a-gA-G][%-#])([0-9])")
-    if not note_name or not octave_name then return 48 end
+    if not note_name or not octave_name then
+        return 48
+    end
 
     local note = note_numbers[note_name]
-    if note == nil then note = 0 end
+    if note == nil then
+        note = 0
+    end
 
     local octave = tonumber(octave_name)
 
     return octave * 12 + note
-
 end
 
 -------------------------------------------------------------------------------
 
 function PadSynthWindow:gui()
-
     local vb = self.vb
     local ps = self.pad_synth
 
@@ -397,13 +413,17 @@ function PadSynthWindow:gui()
             self.vb.views.test_note_group2.visible = false
             self.vb.views.keyzones_group1.visible = true
             self.vb.views.keyzones_group2.visible = true
-            if not is_in_progress() then self.vb.views.do_generate.text = "Generate All Samples" end
+            if not is_in_progress() then
+                self.vb.views.do_generate.text = "Generate All Samples"
+            end
         else
             self.vb.views.keyzones_group1.visible = false
             self.vb.views.keyzones_group2.visible = false
             self.vb.views.test_note_group1.visible = true
             self.vb.views.test_note_group2.visible = true
-            if not is_in_progress() then self.vb.views.do_generate.text = "Generate Test Note" end
+            if not is_in_progress() then
+                self.vb.views.do_generate.text = "Generate Test Note"
+            end
         end
     end
 
@@ -426,55 +446,52 @@ function PadSynthWindow:gui()
 
     -- GUI Table
 
-    local result = vb:column{
+    local result =
+        vb:column {
         style = "body",
         margin = dialog_margin,
         spacing = dialog_spacing,
         uniform = true,
-
         -- Top Panels
 
-        vb:column{
+        vb:column {
             width = full_width,
             margin = 0,
             spacing = 0,
-            vb:horizontal_aligner{
+            vb:horizontal_aligner {
                 margin = 0,
                 spacing = dialog_spacing,
                 mode = "justify",
                 width = "100%",
-
                 -- Global
 
-                vb:column{
+                vb:column {
                     style = "group",
                     margin = control_margin,
                     spacing = control_spacing,
                     height = "100%",
-
-                    vb:horizontal_aligner{mode = "center", vb:text{font = "bold", text = "Global"}},
-
-                    vb:horizontal_aligner{
+                    vb:horizontal_aligner {mode = "center", vb:text {font = "bold", text = "Global"}},
+                    vb:horizontal_aligner {
                         mode = "distribute",
                         width = "100%",
-                        vb:column{
+                        vb:column {
                             uniform = true,
                             margin = 0,
-                            vb:text{text = "Volume", align = "center"},
-                            vb:horizontal_aligner{
+                            vb:text {text = "Volume", align = "center"},
+                            vb:horizontal_aligner {
                                 mode = "center",
                                 margin = 0,
-                                vb:rotary{
+                                vb:rotary {
                                     id = "volume_rotary",
                                     value = ps.volume,
                                     min = 0,
                                     max = 1,
                                     notifier = function()
                                         vb.views.volume.value = vb.views.volume_rotary.value
-                                    end,
-                                },
+                                    end
+                                }
                             },
-                            vb:valuefield{
+                            vb:valuefield {
                                 id = "volume",
                                 value = ps.volume,
                                 min = 0,
@@ -487,27 +504,26 @@ function PadSynthWindow:gui()
                                             sample.volume = vb.views.volume.value
                                         end
                                     end
-                                end,
-                            },
+                                end
+                            }
                         },
-
-                        vb:column{
+                        vb:column {
                             uniform = true,
                             margin = 0,
-                            vb:text{text = "Duration", align = "center"},
-                            vb:horizontal_aligner{
+                            vb:text {text = "Duration", align = "center"},
+                            vb:horizontal_aligner {
                                 mode = "center",
-                                vb:rotary{
+                                vb:rotary {
                                     id = "duration_rotary",
                                     value = ps.sample_duration,
                                     min = 0,
                                     max = 10,
                                     notifier = function()
                                         vb.views.duration.value = vb.views.duration_rotary.value
-                                    end,
-                                },
+                                    end
+                                }
                             },
-                            vb:valuefield{
+                            vb:valuefield {
                                 id = "duration",
                                 value = ps.sample_duration,
                                 min = 0,
@@ -517,19 +533,20 @@ function PadSynthWindow:gui()
                                     vb.views.duration_rotary.value = vb.views.duration.value
                                 end,
                                 tonumber = tonumber,
-                                tostring = function(v) return string.format("%.2f s", v) end,
+                                tostring = function(v)
+                                    return string.format("%.2f s", v)
+                                end
                             },
-                            tooltip = "Length of the wavetable",
-                        },
+                            tooltip = "Length of the wavetable"
+                        }
                     },
-
-                    vb:horizontal_aligner{
+                    vb:horizontal_aligner {
                         mode = "justify",
-                        vb:row{
+                        vb:row {
                             margin = 0,
                             spacing = 0,
-                            vb:text{text = "Mod"},
-                            vb:popup{
+                            vb:text {text = "Mod"},
+                            vb:popup {
                                 width = "75%",
                                 id = "modulation_set_index",
                                 items = self.modulation_sets,
@@ -540,16 +557,15 @@ function PadSynthWindow:gui()
                                             sample.modulation_set_index = vb.views.modulation_set_index.value - 1
                                         end
                                     end
-                                end,
+                                end
                                 -- tooltip = "Define what happens when a new note is triggered in the same column\nCut: the previous note is interrupted (without release)\nNote Off: the previous note ends normally (play the release part of the envelope)\nContinue: the previous note is held",
-                            },
+                            }
                         },
-
-                        vb:row{
+                        vb:row {
                             margin = 0,
                             spacing = 0,
-                            vb:text{text = "FX"},
-                            vb:popup{
+                            vb:text {text = "FX"},
+                            vb:popup {
                                 width = "75%",
                                 id = "device_chain_index",
                                 items = self.device_chains,
@@ -560,52 +576,47 @@ function PadSynthWindow:gui()
                                             sample.device_chain_index = vb.views.device_chain_index.value - 1
                                         end
                                     end
-                                end,
+                                end
                                 -- tooltip = "Define what happens when a new note is triggered in the same column\nCut: the previous note is interrupted (without release)\nNote Off: the previous note ends normally (play the release part of the envelope)\nContinue: the previous note is held",
-                            },
-                        },
-                    },
-
+                            }
+                        }
+                    }
                 },
-
                 -- Overtones Spread
 
-                vb:column{
+                vb:column {
                     style = "group",
                     margin = control_margin,
                     spacing = control_spacing,
                     height = "100%",
-
-                    vb:horizontal_aligner{mode = "center", vb:text{font = "bold", text = "Overtone Spread"}},
-
-                    vb:horizontal_aligner{
+                    vb:horizontal_aligner {mode = "center", vb:text {font = "bold", text = "Overtone Spread"}},
+                    vb:horizontal_aligner {
                         mode = "center",
-                        vb:popup{
+                        vb:popup {
                             id = "base_function",
                             items = {"Sine", "Saw", "Square", "Soft Saw", "Triangle", "Circle"},
                             value = ps.base_function,
-                            tooltip = 'Replace each overtone by an overtone serie',
-                        },
+                            tooltip = "Replace each overtone by an overtone serie"
+                        }
                     },
-
-                    vb:horizontal_aligner{
+                    vb:horizontal_aligner {
                         mode = "distribute",
-                        vb:column{
+                        vb:column {
                             margin = 0,
-                            vb:text{text = "Spread", align = "center", width = 60},
-                            vb:horizontal_aligner{
+                            vb:text {text = "Spread", align = "center", width = 60},
+                            vb:horizontal_aligner {
                                 mode = "center",
-                                vb:rotary{
+                                vb:rotary {
                                     id = "bandwidth_rotary",
                                     min = 1,
                                     max = 200,
                                     value = ps.bandwidth,
                                     notifier = function()
                                         vb.views.bandwidth.value = vb.views.bandwidth_rotary.value
-                                    end,
-                                },
+                                    end
+                                }
                             },
-                            vb:valuefield{
+                            vb:valuefield {
                                 id = "bandwidth",
                                 min = 1,
                                 max = 200,
@@ -615,71 +626,72 @@ function PadSynthWindow:gui()
                                     vb.views.bandwidth_rotary.value = vb.views.bandwidth.value
                                 end,
                                 tonumber = tonumber,
-                                tostring = function(v) return string.format("%d ct", v) end,
+                                tostring = function(v)
+                                    return string.format("%d ct", v)
+                                end
                             },
-                            tooltip = 'Controls how much each overtone is "spread"\naround its frequency',
+                            tooltip = 'Controls how much each overtone is "spread"\naround its frequency'
                         },
-
-                        vb:column{
+                        vb:column {
                             margin = 0,
-                            vb:text{text = "Growth", align = "center", width = 60},
-                            vb:horizontal_aligner{
+                            vb:text {text = "Growth", align = "center", width = 60},
+                            vb:horizontal_aligner {
                                 mode = "center",
-                                vb:rotary{
+                                vb:rotary {
                                     id = "growth_rotary",
                                     value = ps.bandwidth_growth,
                                     min = 0,
                                     max = 3,
                                     notifier = function()
                                         vb.views.growth.value = vb.views.growth_rotary.value
-                                    end,
-                                },
+                                    end
+                                }
                             },
-                            vb:valuefield{
+                            vb:valuefield {
                                 id = "growth",
                                 value = ps.bandwidth_growth,
                                 min = 0,
                                 max = 3,
                                 align = "center",
-                                notifier = function() vb.views.growth_rotary.value = vb.views.growth.value end,
+                                notifier = function()
+                                    vb.views.growth_rotary.value = vb.views.growth.value
+                                end,
                                 tonumber = tonumber,
-                                tostring = function(v) return string.format("%.2f", v) end,
+                                tostring = function(v)
+                                    return string.format("%.2f", v)
+                                end
                             },
-                            tooltip = 'Controls how much the spread grows\nfor higher frequencies',
-                        },
-                    },
+                            tooltip = "Controls how much the spread grows\nfor higher frequencies"
+                        }
+                    }
                 },
-
                 -- Overtones Placement
 
-                vb:column{
+                vb:column {
                     style = "group",
                     margin = control_margin,
                     spacing = control_spacing,
                     height = "100%",
-
-                    vb:horizontal_aligner{mode = "center", vb:text{font = "bold", text = "Overtone Placement"}},
-
-                    vb:horizontal_aligner{
+                    vb:horizontal_aligner {mode = "center", vb:text {font = "bold", text = "Overtone Placement"}},
+                    vb:horizontal_aligner {
                         mode = "center",
-                        vb:popup{
+                        vb:popup {
                             id = "overtones_placement",
                             items = {"Harmonic", "Multiplied", "Powered", "Waved"}, -- "ShiftU", "ShiftL", "PowerU", "PowerL", "Sine" },
                             width = 100,
                             value = ps.overtones_placement,
-                            notifier = overtones_placement_notifier,
+                            notifier = overtones_placement_notifier
                         },
-                        tooltip = "Control the placement of the overtones\nHarmonic: natural placement (integer multiple of the base frequency)\nMultplied: the harmonic placement is scaled by a certain amount\nPowered: the harmonic placement is exponentially scaled by a certain amount\nWaved: a sine function is applied to the harmonic placement",
+                        tooltip = "Control the placement of the overtones\nHarmonic: natural placement (integer multiple of the base frequency)\nMultplied: the harmonic placement is scaled by a certain amount\nPowered: the harmonic placement is exponentially scaled by a certain amount\nWaved: a sine function is applied to the harmonic placement"
                     },
-
-                    vb:horizontal_aligner{
+                    vb:horizontal_aligner {
                         mode = "distribute",
-                        vb:column{
+                        vb:column {
                             margin = 0,
-                            vb:text{id = "param1_label", text = "-", align = "center", width = 60},
-                            vb:horizontal_aligner{
+                            vb:text {id = "param1_label", text = "-", align = "center", width = 60},
+                            vb:horizontal_aligner {
                                 mode = "center",
-                                vb:rotary{
+                                vb:rotary {
                                     id = "param1_rotary",
                                     value = ps.overtones_param1,
                                     min = 0,
@@ -687,27 +699,28 @@ function PadSynthWindow:gui()
                                     notifier = function()
                                         vb.views.param1.value = vb.views.param1_rotary.value
                                     end,
-                                    active = false,
-                                },
+                                    active = false
+                                }
                             },
-                            vb:valuefield{
+                            vb:valuefield {
                                 id = "param1",
                                 value = ps.overtones_param1,
                                 min = 0,
                                 max = 1,
                                 align = "center",
-                                notifier = function() vb.views.param1_rotary.value = vb.views.param1.value end,
-                                active = false,
+                                notifier = function()
+                                    vb.views.param1_rotary.value = vb.views.param1.value
+                                end,
+                                active = false
                             },
-                            visible = false,
+                            visible = false
                         },
-
-                        vb:column{
+                        vb:column {
                             margin = 0,
-                            vb:text{id = "param2_label", text = "-", align = "center", width = 60},
-                            vb:horizontal_aligner{
+                            vb:text {id = "param2_label", text = "-", align = "center", width = 60},
+                            vb:horizontal_aligner {
                                 mode = "center",
-                                vb:rotary{
+                                vb:rotary {
                                     id = "param2_rotary",
                                     value = ps.overtones_param2,
                                     min = 0,
@@ -715,37 +728,38 @@ function PadSynthWindow:gui()
                                     notifier = function()
                                         vb.views.param2.value = vb.views.param2_rotary.value
                                     end,
-                                    active = false,
-                                },
+                                    active = false
+                                }
                             },
-                            vb:valuefield{
+                            vb:valuefield {
                                 id = "param2",
                                 value = ps.overtones_param2,
                                 min = 0,
                                 max = 1,
                                 align = "center",
-                                notifier = function() vb.views.param2_rotary.value = vb.views.param2.value end,
-                                active = false,
+                                notifier = function()
+                                    vb.views.param2_rotary.value = vb.views.param2.value
+                                end,
+                                active = false
                             },
-                            visible = false,
+                            visible = false
                         },
-
-                        vb:column{
+                        vb:column {
                             margin = 0,
-                            vb:text{id = "overtones_treshold_label", text = "-", align = "center", width = 60},
-                            vb:horizontal_aligner{
+                            vb:text {id = "overtones_treshold_label", text = "-", align = "center", width = 60},
+                            vb:horizontal_aligner {
                                 mode = "center",
-                                vb:rotary{
+                                vb:rotary {
                                     id = "overtones_treshold_rotary",
                                     value = ps.overtones_treshold,
                                     min = 1,
                                     max = 64,
                                     notifier = function()
                                         vb.views.overtones_treshold.value = vb.views.overtones_treshold_rotary.value
-                                    end,
-                                },
+                                    end
+                                }
                             },
-                            vb:valuefield{
+                            vb:valuefield {
                                 id = "overtones_treshold",
                                 value = ps.overtones_treshold,
                                 min = 1,
@@ -754,28 +768,31 @@ function PadSynthWindow:gui()
                                 notifier = function()
                                     vb.views.overtones_treshold_rotary.value = vb.views.overtones_treshold.value
                                 end,
-                                tonumber = function(v) return tonumber(v) end,
-                                tostring = function(v) return string.format("%d", v) end,
+                                tonumber = function(v)
+                                    return tonumber(v)
+                                end,
+                                tostring = function(v)
+                                    return string.format("%d", v)
+                                end
                             },
-                            tooltip = "Treshold: define at which harmonic start the placement method\nPeriod: for the Waved placement, define the length of the waves",
+                            tooltip = "Treshold: define at which harmonic start the placement method\nPeriod: for the Waved placement, define the length of the waves"
                         },
-
-                        vb:column{
+                        vb:column {
                             margin = 0,
-                            vb:text{id = "overtones_amount_label", text = "-", align = "center", width = 60},
-                            vb:horizontal_aligner{
+                            vb:text {id = "overtones_amount_label", text = "-", align = "center", width = 60},
+                            vb:horizontal_aligner {
                                 mode = "center",
-                                vb:rotary{
+                                vb:rotary {
                                     id = "overtones_amount_rotary",
                                     value = ps.overtones_amount,
                                     min = -1,
                                     max = 1,
                                     notifier = function()
                                         vb.views.overtones_amount.value = vb.views.overtones_amount_rotary.value
-                                    end,
-                                },
+                                    end
+                                }
                             },
-                            vb:valuefield{
+                            vb:valuefield {
                                 id = "overtones_amount",
                                 value = ps.overtones_amount,
                                 min = -1,
@@ -785,17 +802,18 @@ function PadSynthWindow:gui()
                                     vb.views.overtones_amount_rotary.value = vb.views.overtones_amount.value
                                 end,
                                 tonumber = tonumber,
-                                tostring = function(v) return string.format("%.2f", v) end,
+                                tostring = function(v)
+                                    return string.format("%.2f", v)
+                                end
                             },
-                            tooltip = "Define how much deformation is applied to the placement",
+                            tooltip = "Define how much deformation is applied to the placement"
                         },
-
-                        vb:column{
+                        vb:column {
                             margin = 0,
-                            vb:text{id = "overtones_harmonize_label", text = "-", align = "center", width = 60},
-                            vb:horizontal_aligner{
+                            vb:text {id = "overtones_harmonize_label", text = "-", align = "center", width = 60},
+                            vb:horizontal_aligner {
                                 mode = "center",
-                                vb:rotary{
+                                vb:rotary {
                                     id = "overtones_harmonize_rotary",
                                     value = ps.overtones_harmonize,
                                     min = 0,
@@ -803,10 +821,10 @@ function PadSynthWindow:gui()
                                     notifier = function()
                                         vb.views.overtones_harmonize.value = vb.views.overtones_harmonize_rotary.value
                                     end,
-                                    active = false,
-                                },
+                                    active = false
+                                }
                             },
-                            vb:valuefield{
+                            vb:valuefield {
                                 id = "overtones_harmonize",
                                 value = ps.overtones_harmonize,
                                 min = 0,
@@ -815,28 +833,29 @@ function PadSynthWindow:gui()
                                 notifier = function()
                                     vb.views.overtones_harmonize_rotary.value = vb.views.overtones_harmonize.value
                                 end,
-                                tonumber = function(v) return tonumber(v / 100) end,
-                                tostring = function(v) return string.format("%d %%", v * 100) end,
-                                active = false,
+                                tonumber = function(v)
+                                    return tonumber(v / 100)
+                                end,
+                                tostring = function(v)
+                                    return string.format("%d %%", v * 100)
+                                end,
+                                active = false
                             },
-                            tooltip = "Shift overtones toward harmonic positions",
-                        },
-                    },
+                            tooltip = "Shift overtones toward harmonic positions"
+                        }
+                    }
                 },
-
                 -- Unison
 
-                vb:column{
+                vb:column {
                     style = "group",
                     margin = control_margin,
                     spacing = control_spacing,
                     height = "100%",
-
-                    vb:horizontal_aligner{mode = "center", vb:text{font = "bold", text = "Unison"}},
-
-                    vb:horizontal_aligner{
+                    vb:horizontal_aligner {mode = "center", vb:text {font = "bold", text = "Unison"}},
+                    vb:horizontal_aligner {
                         mode = "center",
-                        vb:valuebox{
+                        vb:valuebox {
                             id = "unison_multiplier",
                             value = ps.unison_multiplier,
                             min = 1,
@@ -849,18 +868,16 @@ function PadSynthWindow:gui()
                                     return tostring((v - 1) * 2)
                                 end
                             end,
-                            notifier = on_unison_multiplier_changed,
-                        },
+                            notifier = on_unison_multiplier_changed
+                        }
                     },
-
-                    vb:row{
+                    vb:row {
                         spacing = control_spacing,
-
-                        vb:column{
+                        vb:column {
                             uniform = true,
-                            vb:horizontal_aligner{
+                            vb:horizontal_aligner {
                                 mode = "center",
-                                vb:rotary{
+                                vb:rotary {
                                     id = "unison_detune_rotary",
                                     value = ps.unison_detune,
                                     min = 0,
@@ -868,10 +885,10 @@ function PadSynthWindow:gui()
                                     notifier = function()
                                         vb.views.unison_detune.value = vb.views.unison_detune_rotary.value
                                     end,
-                                    active = false,
-                                },
+                                    active = false
+                                }
                             },
-                            vb:valuefield{
+                            vb:valuefield {
                                 id = "unison_detune",
                                 value = ps.unison_detune,
                                 min = 0,
@@ -881,17 +898,18 @@ function PadSynthWindow:gui()
                                     vb.views.unison_detune_rotary.value = vb.views.unison_detune.value
                                 end,
                                 tonumber = tonumber,
-                                tostring = function(v) return string.format("%d ct", v) end,
-                                active = false,
+                                tostring = function(v)
+                                    return string.format("%d ct", v)
+                                end,
+                                active = false
                             },
-                            vb:text{id = "unison_detune_label", text = "Detune", align = "center", width = 60},
+                            vb:text {id = "unison_detune_label", text = "Detune", align = "center", width = 60}
                         },
-
-                        vb:column{
+                        vb:column {
                             uniform = true,
-                            vb:horizontal_aligner{
+                            vb:horizontal_aligner {
                                 mode = "center",
-                                vb:rotary{
+                                vb:rotary {
                                     id = "unison_width_rotary",
                                     value = ps.unison_width,
                                     min = 0,
@@ -899,10 +917,10 @@ function PadSynthWindow:gui()
                                     notifier = function()
                                         vb.views.unison_width.value = vb.views.unison_width_rotary.value
                                     end,
-                                    active = false,
-                                },
+                                    active = false
+                                }
                             },
-                            vb:valuefield{
+                            vb:valuefield {
                                 id = "unison_width",
                                 value = ps.unison_width,
                                 min = 0,
@@ -912,61 +930,57 @@ function PadSynthWindow:gui()
                                     vb.views.unison_width_rotary.value = vb.views.unison_width.value
                                 end,
                                 tonumber = tonumber,
-                                tostring = function(v) return string.format("%d", v) end,
-                                active = false,
+                                tostring = function(v)
+                                    return string.format("%d", v)
+                                end,
+                                active = false
                             },
-                            vb:text{id = "unison_width_label", text = "Width", align = "center", width = 60},
-                        },
-                    },
+                            vb:text {id = "unison_width_label", text = "Width", align = "center", width = 60}
+                        }
+                    }
                 },
-
                 -- Sample Format
 
-                vb:column{
+                vb:column {
                     style = "group",
                     margin = control_margin,
                     spacing = control_spacing,
                     height = "100%",
-
-                    vb:horizontal_aligner{mode = "center", vb:text{font = "bold", text = "Sample Format"}},
-
-                    vb:horizontal_aligner{
+                    vb:horizontal_aligner {mode = "center", vb:text {font = "bold", text = "Sample Format"}},
+                    vb:horizontal_aligner {
                         -- style = "invisible",
                         mode = "distribute",
                         margin = 0,
                         spacing = 8 * control_spacing,
                         height = "100%",
-
-                        vb:column{
+                        vb:column {
                             style = "invisible",
                             margin = 0,
                             spacing = control_spacing,
                             height = "100%",
-
-                            vb:horizontal_aligner{
+                            vb:horizontal_aligner {
                                 mode = "center",
-                                vb:switch{id = "nb_channels", items = {"Mono", "Stereo"}, value = ps.nb_channels, width = 100},
+                                vb:switch {
+                                    id = "nb_channels",
+                                    items = {"Mono", "Stereo"},
+                                    value = ps.nb_channels,
+                                    width = 100
+                                }
                             },
-
-                            vb:row{
-                                vb:text{text = "Sample Rate", width = 80},
-                                vb:popup{id = "sample_rate", items = self.sample_rate_names, value = sample_rate},
+                            vb:row {
+                                vb:text {text = "Sample Rate", width = 80},
+                                vb:popup {id = "sample_rate", items = self.sample_rate_names, value = sample_rate}
                             },
-
-                            vb:row{
-                                vb:text{text = "Bit Depth", width = 80},
-                                vb:popup{id = "bit_depth", items = self.bit_depth_names, value = bit_depth},
-                            },
-
+                            vb:row {
+                                vb:text {text = "Bit Depth", width = 80},
+                                vb:popup {id = "bit_depth", items = self.bit_depth_names, value = bit_depth}
+                            }
                         },
-
-                        vb:vertical_aligner{
+                        vb:vertical_aligner {
                             mode = "top",
-
-                            vb:horizontal_aligner{
+                            vb:horizontal_aligner {
                                 mode = "left",
-
-                                vb:checkbox{
+                                vb:checkbox {
                                     id = "autofade",
                                     value = ps.autofade,
                                     notifier = function()
@@ -976,18 +990,14 @@ function PadSynthWindow:gui()
                                             end
                                         end
                                     end,
-                                    tooltip = "Raw: play the sample as is\nAutofade: apply a quick fade to the beginning and end to prevent clicking",
+                                    tooltip = "Raw: play the sample as is\nAutofade: apply a quick fade to the beginning and end to prevent clicking"
                                 },
-
-                                vb:text{text = "Attack Quick Fade"},
+                                vb:text {text = "Attack Quick Fade"}
                             },
-
-                            vb:horizontal_aligner{
+                            vb:horizontal_aligner {
                                 mode = "justify",
-
-                                vb:text{text = "NNA"},
-
-                                vb:popup{
+                                vb:text {text = "NNA"},
+                                vb:popup {
                                     id = "new_note_action",
                                     items = {"Cut", "Note Off", "Continue"},
                                     value = ps.new_note_action,
@@ -1004,18 +1014,14 @@ function PadSynthWindow:gui()
                                             end
                                         end
                                     end,
-                                    tooltip = "Define what happens when a new note is triggered in the same column\nCut: the previous note is interrupted (without release)\nNote Off: the previous note ends normally (play the release part of the envelope)\nContinue: the previous note is held",
-                                },
+                                    tooltip = "Define what happens when a new note is triggered in the same column\nCut: the previous note is interrupted (without release)\nNote Off: the previous note ends normally (play the release part of the envelope)\nContinue: the previous note is held"
+                                }
                             },
-
-                            vb:row{height = 8},
-
-                            vb:horizontal_aligner{
+                            vb:row {height = 8},
+                            vb:horizontal_aligner {
                                 mode = "justify",
-
-                                vb:text{text = "Interpolation"},
-
-                                vb:popup{
+                                vb:text {text = "Interpolation"},
+                                vb:popup {
                                     id = "interpolation",
                                     items = {"None", "Linear", "Cubic", "Sinc"},
                                     value = ps.interpolation,
@@ -1034,14 +1040,12 @@ function PadSynthWindow:gui()
                                             end
                                         end
                                     end,
-                                    tooltip = "Define the interpolation method used when repitching the sample.",
-                                },
+                                    tooltip = "Define the interpolation method used when repitching the sample."
+                                }
                             },
-
-                            vb:horizontal_aligner{
+                            vb:horizontal_aligner {
                                 mode = "left",
-
-                                vb:checkbox{
+                                vb:checkbox {
                                     id = "oversample_enabled",
                                     value = ps.oversample_enabled,
                                     notifier = function()
@@ -1051,106 +1055,115 @@ function PadSynthWindow:gui()
                                             end
                                         end
                                     end,
-                                    tooltip = "Whether interpolation is oversampled or not.",
+                                    tooltip = "Whether interpolation is oversampled or not."
                                 },
-
-                                vb:text{text = "Oversampling"},
-                            },
-                        },
-                    },
+                                vb:text {text = "Oversampling"}
+                            }
+                        }
+                    }
                 },
-
                 -- Key Range
 
-                vb:column{
+                vb:column {
                     style = "group",
                     margin = control_margin,
                     spacing = control_spacing,
                     height = "100%",
-
-                    vb:text{text = "Multi-Sample", font = "bold", width = "100%", align = "center"},
-
-                    vb:row{
+                    vb:text {text = "Multi-Sample", font = "bold", width = "100%", align = "center"},
+                    vb:row {
                         id = "keyzones_group1",
-                        vb:text{text = "Note Range", width = 80},
-                        vb:valuebox{
+                        vb:text {text = "Note Range", width = 80},
+                        vb:valuebox {
                             id = "first_note",
                             value = ps.first_note,
                             min = 0,
                             max = 119,
                             tostring = to_note_string,
-                            tonumber = to_note_number,
+                            tonumber = to_note_number
                         },
-                        vb:valuebox{
+                        vb:valuebox {
                             id = "last_note",
                             value = ps.last_note,
                             min = 0,
                             max = 119,
                             tostring = to_note_string,
-                            tonumber = to_note_number,
-                        },
+                            tonumber = to_note_number
+                        }
                     },
-
-                    vb:row{
+                    vb:row {
                         id = "keyzones_group2",
-                        vb:text{text = "Size of keyzones", width = 80},
-                        vb:space{width = 24},
-                        vb:valuebox{id = "keyzones_step", value = ps.keyzones_step, min = 1, max = 12},
+                        vb:text {text = "Size of keyzones", width = 80},
+                        vb:space {width = 24},
+                        vb:valuebox {id = "keyzones_step", value = ps.keyzones_step, min = 1, max = 12}
                     },
-
-                    vb:space{height = 2 * control_spacing},
-
-                    vb:row{
+                    vb:space {height = 2 * control_spacing},
+                    vb:row {
                         id = "test_note_group1",
                         visible = true,
-                        vb:text{text = "Test note", width = 80},
-                        vb:valuebox{
+                        vb:text {text = "Test note", width = 80},
+                        vb:valuebox {
                             id = "test_note",
                             value = ps.test_note,
                             min = 0,
                             max = 119,
                             tostring = to_note_string,
-                            tonumber = to_note_number,
+                            tonumber = to_note_number
                         },
-                        vb:valuefield{
+                        vb:valuefield {
                             id = "test_duration",
                             min = 0,
                             max = 10,
                             value = ps.test_duration,
                             width = 60,
                             tonumber = tonumber,
-                            tostring = function(v) return string.format("%.2f s", v) end,
-                        },
-                    },
-                },
-            },
+                            tostring = function(v)
+                                return string.format("%.2f s", v)
+                            end
+                        }
+                    }
+                }
+            }
         },
-
         -- End of Top Panels
 
         -- Formula
 
-        vb:row{
+        vb:row {
             width = full_width,
             margin = 0,
             spacing = 0,
             style = "group",
-
-            vb:column{
+            vb:column {
                 width = 0.75 * full_width,
                 uniform = true,
                 margin = control_margin,
                 spacing = control_spacing,
-
-                vb:horizontal_aligner{
+                vb:horizontal_aligner {
                     mode = "left",
-                    vb:popup{
+                    vb:popup {
                         id = "formula_presets",
                         width = 150,
                         items = {
-                            "-- Overtone Formula --", "All Overtones", "Saw", "Bright Saw", "Extra Bright Saw", "Soft Saw", "Square",
-                            "Triangle", "-- Scalable Presets: --", "Linear Ramp", "Cosinus Ramp", "Square Root Ramp", "Log Ramp",
-                            "Triangle Cycle", "Half Cycle", "Square Cycle", "Cosinus Cycle", "Sinus Cycle", "Many Cycles", "Helix",
+                            "-- Overtone Formula --",
+                            "All Overtones",
+                            "Saw",
+                            "Bright Saw",
+                            "Extra Bright Saw",
+                            "Soft Saw",
+                            "Square",
+                            "Triangle",
+                            "-- Scalable Presets: --",
+                            "Linear Ramp",
+                            "Cosinus Ramp",
+                            "Square Root Ramp",
+                            "Log Ramp",
+                            "Triangle Cycle",
+                            "Half Cycle",
+                            "Square Cycle",
+                            "Cosinus Cycle",
+                            "Sinus Cycle",
+                            "Many Cycles",
+                            "Helix"
                         },
                         value = 1,
                         notifier = function(choice)
@@ -1193,119 +1206,132 @@ function PadSynthWindow:gui()
                             elseif items[choice] == "Helix" then
                                 vb.views.formula_string.value = "(1 + cos(x * (2 * 32000 + 1) * pi))/ 2"
                             end
-                        end,
-                    },
+                        end
+                    }
                 },
-
-                vb:textfield{
+                vb:textfield {
                     id = "formula_string",
                     width = "100%",
                     height = 1.5 * control_height,
                     text = ps.formula_string,
                     tooltip = formula_documentation,
-                    notifier = function() self:apply_formula() end,
+                    notifier = function()
+                        self:apply_formula()
+                    end
                 },
-
-                vb:text{id = "formula_error", width = "100%", text = "", style = "strong"},
+                vb:text {id = "formula_error", width = "100%", text = "", style = "strong"}
             },
-
-            vb:horizontal_aligner{
+            vb:horizontal_aligner {
                 width = 0.25 * full_width,
                 mode = "justify",
                 margin = control_margin,
                 spacing = dialog_spacing,
-
-                vb:column{
-                    vb:text{text = "Curvature"}, vb:horizontal_aligner{
+                vb:column {
+                    vb:text {text = "Curvature"},
+                    vb:horizontal_aligner {
                         mode = "center",
-                        vb:rotary{
+                        vb:rotary {
                             id = "formula_curvature",
                             min = -1,
                             max = 1,
                             value = ps.formula_curvature,
-                            notifier = function() self:apply_formula() end,
-                        },
-                    },
+                            notifier = function()
+                                self:apply_formula()
+                            end
+                        }
+                    }
                 },
-
-                vb:column{
-                    vb:text{text = "Curve Torsion"}, vb:horizontal_aligner{
+                vb:column {
+                    vb:text {text = "Curve Torsion"},
+                    vb:horizontal_aligner {
                         mode = "center",
-                        vb:rotary{
+                        vb:rotary {
                             id = "formula_torsion",
                             min = -1,
                             max = 1,
                             value = ps.formula_torsion,
-                            notifier = function() self:apply_formula() end,
-                        },
-                    },
+                            notifier = function()
+                                self:apply_formula()
+                            end
+                        }
+                    }
                 },
-
-                vb:column{
-                    vb:text{text = "Curve Shape"}, vb:horizontal_aligner{
+                vb:column {
+                    vb:text {text = "Curve Shape"},
+                    vb:horizontal_aligner {
                         mode = "center",
-                        vb:rotary{
+                        vb:rotary {
                             id = "formula_shape",
                             min = -1,
                             max = 1,
                             value = ps.formula_shape,
-                            notifier = function() self:apply_formula() end,
-                        },
-                    },
+                            notifier = function()
+                                self:apply_formula()
+                            end
+                        }
+                    }
                 },
-
-                vb:column{
-                    vb:text{text = "X Axis Scale"},
-                    vb:horizontal_aligner{
+                vb:column {
+                    vb:text {text = "X Axis Scale"},
+                    vb:horizontal_aligner {
                         mode = "center",
-                        vb:rotary{
+                        vb:rotary {
                             id = "formula_length",
                             min = -249,
                             max = 0,
                             value = ps.formula_length,
-                            notifier = function() self:apply_formula() end,
-                        },
+                            notifier = function()
+                                self:apply_formula()
+                            end
+                        }
                     },
-                    tooltip = "Scale the X axis\n(works only for formulas based on the x variable)",
-                },
-            },
+                    tooltip = "Scale the X axis\n(works only for formulas based on the x variable)"
+                }
+            }
         },
-
         -- Harmonics
 
-        vb:column{
+        vb:column {
             width = full_width,
             margin = control_margin,
             spacing = 0,
             style = "group",
-
-            vb:horizontal_aligner{
+            vb:horizontal_aligner {
                 margin = 0,
                 spacing = control_spacing,
                 mode = "justify",
-
-                vb:row{
-
-                    vb:button{
+                vb:row {
+                    vb:button {
                         text = "  Reset All Overtones ",
                         notifier = function()
-                            for i = 1, 256 do self.harmonics[i] = 1 end
+                            for i = 1, 256 do
+                                self.harmonics[i] = 1
+                            end
                             self:update_harmonics_sliders()
-                        end,
-                    }, vb:space{width = 4 * control_spacing}, vb:button{
+                        end
+                    },
+                    vb:space {width = 4 * control_spacing},
+                    vb:button {
                         text = " Some Overtones ",
                         notifier = function()
                             self.harmonics[1] = 1
-                            for i = 2, 256 do self.harmonics[i] = math.random(0, 1) end
+                            for i = 2, 256 do
+                                self.harmonics[i] = math.random(0, 1)
+                            end
                             self:update_harmonics_sliders()
-                        end,
-                    }, vb:button{
+                        end
+                    },
+                    vb:button {
                         text = " Random Values ",
                         notifier = function()
-                            for i = 1, 256 do self.harmonics[i] = math.random() end
+                            for i = 1, 256 do
+                                self.harmonics[i] = math.random()
+                            end
                             self:update_harmonics_sliders()
-                        end,
-                    }, vb:space{width = 4 * control_spacing}, vb:button{
+                        end
+                    },
+                    vb:space {width = 4 * control_spacing},
+                    vb:button {
                         text = " Random Ramp ",
                         notifier = function()
                             local curvature = 2 * math.random() - 1
@@ -1317,8 +1343,9 @@ function PadSynthWindow:gui()
                                 self.harmonics[i] = clamp(curve(x, shape, torsion, curvature), 0, 1)
                             end
                             self:update_harmonics_sliders()
-                        end,
-                    }, vb:button{
+                        end
+                    },
+                    vb:button {
                         text = " Chaotic Ramps ",
                         notifier = function()
                             for j = 0, 15 do
@@ -1331,8 +1358,10 @@ function PadSynthWindow:gui()
                                 end
                             end
                             self:update_harmonics_sliders()
-                        end,
-                    }, vb:space{width = 4 * control_spacing}, vb:button{
+                        end
+                    },
+                    vb:space {width = 4 * control_spacing},
+                    vb:button {
                         text = " Chaotic Curve ",
                         notifier = function()
                             local start_value = math.random()
@@ -1352,8 +1381,9 @@ function PadSynthWindow:gui()
                                 end
                             end
                             self:update_harmonics_sliders()
-                        end,
-                    }, vb:button{
+                        end
+                    },
+                    vb:button {
                         text = " Smooth Curve ",
                         notifier = function()
                             local start_value = math.random()
@@ -1369,29 +1399,25 @@ function PadSynthWindow:gui()
                                 end
                             end
                             self:update_harmonics_sliders()
-                        end,
-                    },
+                        end
+                    }
                 },
-
-                vb:row{},
-
-                vb:switch{
+                vb:row {},
+                vb:switch {
                     id = "harmonics_page",
                     items = {"1 - 64", "65 - 128", "129 - 192", "193 - 256"},
                     width = 300,
-                    notifier = function() self:update_harmonics_sliders() end,
-                },
-
+                    notifier = function()
+                        self:update_harmonics_sliders()
+                    end
+                }
             },
-
-            vb:horizontal_aligner{id = "harmonics_group", mode = "distribute", spacing = 0},
-
-            vb:horizontal_aligner{
+            vb:horizontal_aligner {id = "harmonics_group", mode = "distribute", spacing = 0},
+            vb:horizontal_aligner {
                 margin = 0,
                 spacing = control_spacing,
                 mode = "left",
-
-                vb:button{
+                vb:button {
                     text = " Clear Even ",
                     notifier = function()
                         for i = 1, 256 do
@@ -1399,10 +1425,9 @@ function PadSynthWindow:gui()
                             self.harmonics[i] = self.harmonics[i] * y
                         end
                         self:update_harmonics_sliders()
-                    end,
+                    end
                 },
-
-                vb:button{
+                vb:button {
                     text = " Clear Some ",
                     notifier = function()
                         for i = 2, 256 do
@@ -1410,54 +1435,56 @@ function PadSynthWindow:gui()
                             self.harmonics[i] = dice * self.harmonics[i]
                         end
                         self:update_harmonics_sliders()
-                    end,
+                    end
                 },
-
-                vb:space{width = 4 * control_spacing},
-
-                vb:button{
+                vb:space {width = 4 * control_spacing},
+                vb:button {
                     text = " * Random ",
                     notifier = function()
-                        for i = 1, 256 do self.harmonics[i] = self.harmonics[i] * math.random() end
+                        for i = 1, 256 do
+                            self.harmonics[i] = self.harmonics[i] * math.random()
+                        end
                         self:update_harmonics_sliders()
-                    end,
+                    end
                 },
-
-                vb:button{
+                vb:button {
                     text = " + Random ",
                     notifier = function()
-                        for i = 1, 256 do self.harmonics[i] = clamp(self.harmonics[i] + 0.25 * math.random(), 0, 1) end
+                        for i = 1, 256 do
+                            self.harmonics[i] = clamp(self.harmonics[i] + 0.25 * math.random(), 0, 1)
+                        end
                         self:update_harmonics_sliders()
-                    end,
+                    end
                 },
-
-                vb:button{
+                vb:button {
                     text = " - Random ",
                     notifier = function()
-                        for i = 1, 256 do self.harmonics[i] = clamp(self.harmonics[i] - 0.25 * math.random(), 0, 1) end
+                        for i = 1, 256 do
+                            self.harmonics[i] = clamp(self.harmonics[i] - 0.25 * math.random(), 0, 1)
+                        end
                         self:update_harmonics_sliders()
-                    end,
+                    end
                 },
-
-                vb:space{width = 4 * control_spacing},
-
-                vb:button{
+                vb:space {width = 4 * control_spacing},
+                vb:button {
                     text = " Amplify ",
                     notifier = function()
-                        for i = 1, 256 do self.harmonics[i] = math.sqrt(self.harmonics[i]) end
+                        for i = 1, 256 do
+                            self.harmonics[i] = math.sqrt(self.harmonics[i])
+                        end
                         self:update_harmonics_sliders()
-                    end,
+                    end
                 },
-
-                vb:button{
+                vb:button {
                     text = " Reduce ",
                     notifier = function()
-                        for i = 1, 256 do self.harmonics[i] = self.harmonics[i] * self.harmonics[i] end
+                        for i = 1, 256 do
+                            self.harmonics[i] = self.harmonics[i] * self.harmonics[i]
+                        end
                         self:update_harmonics_sliders()
-                    end,
+                    end
                 },
-
-                vb:button{
+                vb:button {
                     text = " Exagerate ",
                     notifier = function()
                         for i = 1, 256 do
@@ -1468,55 +1495,57 @@ function PadSynthWindow:gui()
                             end
                         end
                         self:update_harmonics_sliders()
-                    end,
+                    end
                 },
-
-                vb:space{width = 4 * control_spacing},
-
-                vb:button{
+                vb:space {width = 4 * control_spacing},
+                vb:button {
                     text = " Invert ",
                     notifier = function()
-                        for i = 1, 256 do self.harmonics[i] = 1 - self.harmonics[i] end
+                        for i = 1, 256 do
+                            self.harmonics[i] = 1 - self.harmonics[i]
+                        end
                         self:update_harmonics_sliders()
-                    end,
+                    end
                 },
-
-                vb:button{
+                vb:button {
                     text = " Reverse ",
                     notifier = function()
                         local h = {}
-                        for i = 1, 256 do h[i] = self.harmonics[i] end
-                        for i = 1, 256 do self.harmonics[i] = h[256 - i + 1] end
+                        for i = 1, 256 do
+                            h[i] = self.harmonics[i]
+                        end
+                        for i = 1, 256 do
+                            self.harmonics[i] = h[256 - i + 1]
+                        end
                         self:update_harmonics_sliders()
-                    end,
-                },
-            },
+                    end
+                }
+            }
         },
-
         -- Output
 
-        vb:column{
+        vb:column {
             width = full_width,
             margin = 0,
             spacing = 0,
             style = "invisible",
-            vb:horizontal_aligner{
+            vb:horizontal_aligner {
                 mode = "justify",
                 height = 104,
                 spacing = control_spacing,
                 margin = 0,
-                vb:row{id = "output_group", style = "border", spacing = 0, margin = 0, height = 104},
-                vb:vertical_aligner{
+                vb:row {id = "output_group", style = "border", spacing = 0, margin = 0, height = 104},
+                vb:vertical_aligner {
                     mode = "center",
                     margin = 0,
                     spacing = 0,
-                    vb:column{
+                    vb:column {
                         style = "group",
                         margin = control_margin,
                         spacing = control_spacing,
                         width = 200,
                         uniform = true,
-                        vb:button{
+                        vb:button {
                             width = "100%",
                             text = " Send to Formula ",
                             notifier = function()
@@ -1526,72 +1555,75 @@ function PadSynthWindow:gui()
                                 end
                                 formula = formula .. "}; return h[i] end)()"
                                 vb.views.formula_string.value = formula
-                                for i = 1, 256 do self.harmonics[i] = 1 end
+                                for i = 1, 256 do
+                                    self.harmonics[i] = 1
+                                end
                                 vb.views.formula_curvature.value = 0
                                 vb.views.formula_torsion.value = 0
                                 vb.views.formula_shape.value = 0
                                 vb.views.formula_length.value = 0
                                 self:update_harmonics_sliders()
-                            end,
+                            end
                         },
-                        vb:button{
+                        vb:button {
                             width = "100%",
                             text = " Send to Sliders ",
                             notifier = function()
-                                for i = 1, 256 do self.harmonics[i] = self.harmonics_output[i] end
+                                for i = 1, 256 do
+                                    self.harmonics[i] = self.harmonics_output[i]
+                                end
                                 vb.views.formula_string.value = "1"
                                 vb.views.formula_curvature.value = 0
                                 vb.views.formula_torsion.value = 0
                                 vb.views.formula_shape.value = 0
                                 vb.views.formula_length.value = 0
                                 self:update_harmonics_sliders()
-                            end,
-                        },
-                    },
-                },
-            },
+                            end
+                        }
+                    }
+                }
+            }
         },
-
         -- Status
 
-        vb:column{
+        vb:column {
             width = full_width,
             margin = control_margin,
             spacing = 0,
-            vb:horizontal_aligner{
+            vb:horizontal_aligner {
                 mode = "distribute",
                 margin = 0,
                 spacing = control_margin,
                 height = 26,
                 width = "100%",
-
-                vb:column{
+                vb:column {
                     style = "invisible",
                     width = 800,
                     height = "100%",
                     uniform = true,
                     margin = 2,
-                    vb:column{style = "invisible", width = "100%", vb:text{id = "status", text = "PadSynth Opened", height = 24}},
+                    vb:column {
+                        style = "invisible",
+                        width = "100%",
+                        vb:text {id = "status", text = "PadSynth Opened", height = 24}
+                    }
                 },
-
-                vb:button{id = "do_generate_test", width = 150, height = 26, text = "Generate Test Note"},
-
-                vb:bitmap{id = "progress_bitmap", bitmap = "data/progress-empty.png", mode = "transparent"},
-
-                vb:button{id = "do_generate", width = 200, height = "100%", text = "Generate All Samples"},
-            },
-        },
+                vb:button {id = "do_generate_test", width = 150, height = 26, text = "Generate Test Note"},
+                vb:bitmap {id = "progress_bitmap", bitmap = "data/progress-empty.png", mode = "transparent"},
+                vb:button {id = "do_generate", width = 200, height = "100%", text = "Generate All Samples"}
+            }
+        }
     }
 
     -- End of GUI Table
 
     for i = 1, 64 do
         vb.views.harmonics_group:add_child(
-            vb:column{
+            vb:column {
                 width = 16,
                 margin = 0,
                 spacing = 0,
-                vb:minislider{
+                vb:minislider {
                     width = 16,
                     id = "H" .. i,
                     height = 150,
@@ -1604,25 +1636,28 @@ function PadSynthWindow:gui()
                         local v = vb.views["H" .. i].value
                         self.harmonics[i + offset] = v
                         self:apply_formula()
-                        vb.views.status.text = "Overtone " .. i + offset .. " set to " .. string.format("%.1f %%", 100 * v)
-                    end,
-                },
-            })
+                        vb.views.status.text =
+                            "Overtone " .. i + offset .. " set to " .. string.format("%.1f %%", 100 * v)
+                    end
+                }
+            }
+        )
     end
 
-    vb.views.output_group:add_child(vb:space{width = 2, height = 156})
+    vb.views.output_group:add_child(vb:space {width = 2, height = 156})
     for i = 1, 256 do
         local y = (256 - i) / 255
         local h = 100
         local yy = math.floor(y * h + 0.5)
         vb.views.output_group:add_child(
-            vb:column{
-                vb:space{id = "output_above_" .. i, width = 4, height = 1},
-                vb:bitmap{width = 4, height = 4, bitmap = "data/pixel.png", mode = "body_color"},
-                vb:space{id = "output_below_" .. i, width = 4, height = 1},
-            })
+            vb:column {
+                vb:space {id = "output_above_" .. i, width = 4, height = 1},
+                vb:bitmap {width = 4, height = 4, bitmap = "data/pixel.png", mode = "body_color"},
+                vb:space {id = "output_below_" .. i, width = 4, height = 1}
+            }
+        )
     end
-    vb.views.output_group:add_child(vb:space{width = 2, height = 156})
+    vb.views.output_group:add_child(vb:space {width = 2, height = 156})
 
     self:update_harmonics_sliders()
     self:apply_formula()
@@ -1653,14 +1688,32 @@ function PadSynthWindow:apply_formula()
     for i = 1, 256 do
         formula_context.i = i
         formula_context.x = (i - 1) / length
-        local status, val = xpcall(formula, function(err) vb.views.formula_error.text = "ERROR: " .. err end)
+        local status, val =
+            xpcall(
+            formula,
+            function(err)
+                vb.views.formula_error.text = "ERROR: " .. err
+            end
+        )
         if status and type(val) ~= "number" then
             vb.views.formula_error.text = "ERROR: The formula returns " .. type(val) .. " instead of a number"
             return
         end
         if status then
-            val = curve(val, vb.views.formula_shape.value, vb.views.formula_torsion.value, vb.views.formula_curvature.value)
-            val = curve(val, vb.views.formula_shape.value, vb.views.formula_torsion.value, vb.views.formula_curvature.value)
+            val =
+                curve(
+                val,
+                vb.views.formula_shape.value,
+                vb.views.formula_torsion.value,
+                vb.views.formula_curvature.value
+            )
+            val =
+                curve(
+                val,
+                vb.views.formula_shape.value,
+                vb.views.formula_torsion.value,
+                vb.views.formula_curvature.value
+            )
             self.harmonics_output[i] = self.harmonics[i] * clamp(val, 0.0, 1.0)
         end
     end
@@ -1670,20 +1723,23 @@ end
 -------------------------------------------------------------------------------
 
 function PadSynthWindow:update_harmonics_sliders()
-
     local offsets = {0, 64, 128, 192}
     local offset = offsets[self.vb.views.harmonics_page.value]
 
     for i = 1, 64 do
         self.vb.views["H" .. i].value = self.harmonics[i + offset]
-        self.vb.views["H" .. i].tooltip = "Overtone " .. (i + offset) .. " = " .. string.format("%.1f %%", 100 * self.harmonics[i + offset])
+        self.vb.views["H" .. i].tooltip =
+            "Overtone " .. (i + offset) .. " = " .. string.format("%.1f %%", 100 * self.harmonics[i + offset])
     end
 end
 
 function PadSynthWindow:update_harmonics_output_display()
-
     local maximum = 0
-    for i = 1, 256 do if self.harmonics_output[i] > maximum then maximum = self.harmonics_output[i] end end
+    for i = 1, 256 do
+        if self.harmonics_output[i] > maximum then
+            maximum = self.harmonics_output[i]
+        end
+    end
 
     for i = 1, 256 do
         local y = clamp(self.harmonics_output[i] / maximum, 0, 1)
@@ -1691,7 +1747,6 @@ function PadSynthWindow:update_harmonics_output_display()
         local yy = math.floor(y * h + 0.5)
         self.vb.views["output_above_" .. i].height = 1 + h - yy
     end
-
 end
 
 -------------------------------------------------------------------------------
