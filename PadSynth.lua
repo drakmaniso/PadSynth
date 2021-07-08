@@ -195,7 +195,8 @@ PadSynth.overtones_placement_functions = {
     -- Harmonic
     function(self, n)
         return n
-    end, -- Multplied
+    end,
+    -- Multplied
     function(self, n)
         local treshold = self.overtones_treshold
         if n < treshold then
@@ -213,7 +214,8 @@ PadSynth.overtones_placement_functions = {
         local result_int = math.floor(result + 0.5)
         local result_dec = result - result_int
         return result_int + (1 - self.overtones_harmonize) * result_dec
-    end, -- Powered
+    end,
+    -- Powered
     function(self, n)
         local treshold = self.overtones_treshold
         if n < treshold then
@@ -231,7 +233,8 @@ PadSynth.overtones_placement_functions = {
         local result_int = math.floor(result + 0.5)
         local result_dec = result - result_int
         return result_int + (1 - self.overtones_harmonize) * result_dec
-    end, -- Waved
+    end,
+    -- Waved
     function(self, n)
         if n == 1 then
             return n
@@ -248,9 +251,10 @@ PadSynth.overtones_placement_functions = {
         local result_int = math.floor(result + 0.5)
         local result_dec = result - result_int
         return result_int + (1 - self.overtones_harmonize) * result_dec
-    end, -- Shift Higher
+    end,
+    -- Shift Higher
     function(self, n)
-        local treshold = self.overtones_param1 * 63 + 1
+        local treshold = self.overtones_treshold
         if n < treshold then
             return n
         end
@@ -260,9 +264,10 @@ PadSynth.overtones_placement_functions = {
         local result_int = math.floor(result + 0.5)
         local result_dec = result - result_int
         return result_int + (1 - self.overtones_harmonize) * result_dec
-    end, -- Shift Lower
+    end,
+    -- Shift Lower
     function(self, n)
-        local treshold = self.overtones_param1 * 63 + 1
+        local treshold = self.overtones_treshold
         if n < treshold then
             return n
         end
@@ -272,7 +277,8 @@ PadSynth.overtones_placement_functions = {
         local result_int = math.floor(result + 0.5)
         local result_dec = result - result_int
         return result_int + (1 - self.overtones_harmonize) * result_dec
-    end, -- PowerU
+    end,
+    -- PowerU
     function(self, n)
         local param1 = math.pow(10, -(1 - self.overtones_param1) * 3) * 100 + 1
         local n0 = n - 1
@@ -280,7 +286,8 @@ PadSynth.overtones_placement_functions = {
         local result_int = math.floor(result + 0.5)
         local result_dec = result - result_int
         return result_int + (1 - self.overtones_harmonize) * result_dec
-    end, -- PowerL
+    end,
+    -- PowerL
     function(self, n)
         local param1 = math.pow(10, -(1 - self.overtones_param1) * 3)
         local n0 = n - 1
@@ -288,7 +295,8 @@ PadSynth.overtones_placement_functions = {
         local result_int = math.floor(result + 0.5)
         local result_dec = result - result_int
         return result_int + (1 - self.overtones_harmonize) * result_dec
-    end, -- Sine
+    end,
+    -- Sine
     function(self, n)
         local param1 = math.pow(10, -(1 - self.overtones_param1) * 3)
         local n0 = n - 1
@@ -619,7 +627,7 @@ function PadSynth:initialize_parameters()
     self.formula_string = "1 / i"
     self.formula_length = 0
     self.formula_curvature = 0
-    self.formula_torsion = 0
+    self.formula_torsion = -1
     self.formula_shape = 0
 end
 
@@ -767,9 +775,8 @@ function PadSynth:load_parameters()
 
     self.harmonics = data.harmonics
 
-    if data.formula_string then
         self.formula_string = data.formula_string
-    else
+    if self.formula_string == nil then
         self.formula_string = "1"
     end
     self.formula_curvature = data.formula_curvature
@@ -792,7 +799,10 @@ function PadSynth:load_parameters()
     end
 
     if self.version < 5 then
-        self.formula_string = "1"
+        if self.torsion ~= nil and self.curvature > 0 then
+            self.torsion = -self.torsion
+        end
+        self.version = 5
     end
 end
 

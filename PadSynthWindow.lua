@@ -392,18 +392,22 @@ function PadSynthWindow:gui()
         vb.views.overtones_amount_rotary.active = a
         vb.views.overtones_harmonize.active = a
         vb.views.overtones_harmonize_rotary.active = a
-        if op == 1 then
-            vb.views.overtones_treshold_label.text = "-"
-            vb.views.overtones_amount_label.text = "-"
-            vb.views.overtones_harmonize_label.text = "-"
+        if op == 2 then
+            vb.views.overtones_treshold_label.text = "Treshold"
+            vb.views.overtones_amount_label.text = "Amount"
+            vb.views.overtones_harmonize_label.text = "Harmonize"
+        elseif op == 3 then
+            vb.views.overtones_treshold_label.text = "Treshold"
+            vb.views.overtones_amount_label.text = "Amount"
+            vb.views.overtones_harmonize_label.text = "Harmonize"
         elseif op == 4 then
             vb.views.overtones_treshold_label.text = "Period"
             vb.views.overtones_amount_label.text = "Amount"
             vb.views.overtones_harmonize_label.text = "Harmonize"
         else
-            vb.views.overtones_treshold_label.text = "Treshold"
-            vb.views.overtones_amount_label.text = "Amount"
-            vb.views.overtones_harmonize_label.text = "Harmonize"
+            vb.views.overtones_treshold_label.text = "-"
+            vb.views.overtones_amount_label.text = "-"
+            vb.views.overtones_harmonize_label.text = "-"
         end
     end
 
@@ -677,7 +681,17 @@ function PadSynthWindow:gui()
                         mode = "center",
                         vb:popup {
                             id = "overtones_placement",
-                            items = {"Harmonic", "Multiplied", "Powered", "Waved"}, -- "ShiftU", "ShiftL", "PowerU", "PowerL", "Sine" },
+                            items = {
+                                "Harmonic",
+                                "Multiplied",
+                                "Powered",
+                                "Waved"
+                                -- "ShiftU",
+                                -- "ShiftL",
+                                -- "PowerU",
+                                -- "PowerL",
+                                -- "Sine"
+                            },
                             width = 100,
                             value = ps.overtones_placement,
                             notifier = overtones_placement_notifier
@@ -687,6 +701,7 @@ function PadSynthWindow:gui()
                     vb:horizontal_aligner {
                         mode = "distribute",
                         vb:column {
+                            visible = false,
                             margin = 0,
                             vb:text {id = "param1_label", text = "-", align = "center", width = 60},
                             vb:horizontal_aligner {
@@ -712,10 +727,10 @@ function PadSynthWindow:gui()
                                     vb.views.param1_rotary.value = vb.views.param1.value
                                 end,
                                 active = false
-                            },
-                            visible = false
+                            }
                         },
                         vb:column {
+                            visible = false,
                             margin = 0,
                             vb:text {id = "param2_label", text = "-", align = "center", width = 60},
                             vb:horizontal_aligner {
@@ -741,8 +756,7 @@ function PadSynthWindow:gui()
                                     vb.views.param2_rotary.value = vb.views.param2.value
                                 end,
                                 active = false
-                            },
-                            visible = false
+                            }
                         },
                         vb:column {
                             margin = 0,
@@ -1249,6 +1263,7 @@ function PadSynthWindow:gui()
                             id = "formula_torsion",
                             min = -1,
                             max = 1,
+                            default = -1,
                             value = ps.formula_torsion,
                             notifier = function()
                                 self:apply_formula()
