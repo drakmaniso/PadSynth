@@ -1533,7 +1533,16 @@ function PadSynthWindow:gui()
                             },
                             vb:popup {
                                 id = "base_function",
-                                items = {"Sine", "Saw", "Square", "Soft Saw", "Triangle", "Circle"},
+                                items = {
+                                    "Sine",
+                                    "Saw",
+                                    "Square",
+                                    "Soft Saw",
+                                    "Triangle",
+                                    "Circle",
+                                    "Bright Saw",
+                                    "Bright Square"
+                                },
                                 value = ps.base_function,
                                 notifier = function()
                                     self:apply_formula()
@@ -1610,7 +1619,7 @@ function PadSynthWindow:gui()
                                     end
                                     vb.views.base_function.value = 1
                                     vb.views.formula_curvature.value = 0
-                                    vb.views.formula_torsion.value = 0
+                                    vb.views.formula_torsion.value = -1
                                     vb.views.formula_shape.value = 0
                                     vb.views.formula_length.value = 0
                                     self:update_harmonics_sliders()
@@ -1628,7 +1637,7 @@ function PadSynthWindow:gui()
                                     vb.views.base_function.value = 1
                                     vb.views.formula_string.value = "1"
                                     vb.views.formula_curvature.value = 0
-                                    vb.views.formula_torsion.value = 0
+                                    vb.views.formula_torsion.value = -1
                                     vb.views.formula_shape.value = 0
                                     vb.views.formula_length.value = 0
                                     self:update_harmonics_sliders()

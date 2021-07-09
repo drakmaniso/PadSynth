@@ -176,6 +176,42 @@ function PadSynth:prepare_harmonics(curvature, torsion, shape)
                 end
             end
         end
+    elseif self.base_function == 7 then
+        -- Bright Saw
+        self.prepared_harmonics = {}
+        for i = 1, 256 do
+            self.prepared_harmonics[i] = 0
+        end
+        for i, v in ipairs(self.harmonics_output) do
+            if v > 0 then
+                for j = 1, 256 do
+                    if i * j <= 256 then
+                        local h = self.prepared_harmonics[i * j]
+                        h = h + math.sqrt(v / j)
+                        self.prepared_harmonics[i * j] = h
+                    end
+                end
+            end
+        end
+    elseif self.base_function == 8 then
+        -- Bright Square
+        self.prepared_harmonics = {}
+        for i = 1, 256 do
+            self.prepared_harmonics[i] = 0
+        end
+        for i, v in ipairs(self.harmonics_output) do
+            if v > 0 then
+                for j = 1, 256 do
+                    if i * j <= 256 then
+                        local h = self.prepared_harmonics[i * j]
+                        if j % 2 ~= 0 then
+                            h = h + math.sqrt(v / j)
+                        end
+                        self.prepared_harmonics[i * j] = h
+                    end
+                end
+            end
+        end
     else
         self.prepared_harmonics = self.harmonics_output
     end
