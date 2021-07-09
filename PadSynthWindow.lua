@@ -195,8 +195,10 @@ PadSynthWindow.nb_channels_names = {"Mono", "Stereo"}
 -------------------------------------------------------------------------------
 
 function PadSynthWindow:generate_samples()
-    self:update_parameters()
     self.pad_synth.is_test_note = false
+
+    -- necessary for the few parameters that don't update the harmonics (eg overton spread and placement)
+    self:update_parameters()
 
     local views = self.vb.views
 
@@ -235,8 +237,10 @@ end
 -------------------------------------------------------------------------------
 
 function PadSynthWindow:generate_test_note()
-    self:update_parameters()
     self.pad_synth.is_test_note = true
+
+    -- necessary for the few parameters that don't update the harmonics (eg overton spread and placement)
+    self:update_parameters()
 
     local views = self.vb.views
 
@@ -490,6 +494,7 @@ function PadSynthWindow:gui()
                                     value = ps.volume,
                                     min = 0,
                                     max = 1,
+                                    default = 0.5,
                                     notifier = function()
                                         vb.views.volume.value = vb.views.volume_rotary.value
                                     end
@@ -522,6 +527,7 @@ function PadSynthWindow:gui()
                                     value = ps.sample_duration,
                                     min = 0,
                                     max = 10,
+                                    default = 1,
                                     notifier = function()
                                         vb.views.duration.value = vb.views.duration_rotary.value
                                     end
@@ -595,15 +601,6 @@ function PadSynthWindow:gui()
                     height = "100%",
                     vb:horizontal_aligner {mode = "center", vb:text {font = "bold", text = "Overtone Spread"}},
                     vb:horizontal_aligner {
-                        mode = "center",
-                        vb:popup {
-                            id = "base_function",
-                            items = {"Sine", "Saw", "Square", "Soft Saw", "Triangle", "Circle"},
-                            value = ps.base_function,
-                            tooltip = "Replace each overtone by an overtone serie"
-                        }
-                    },
-                    vb:horizontal_aligner {
                         mode = "distribute",
                         vb:column {
                             margin = 0,
@@ -614,6 +611,7 @@ function PadSynthWindow:gui()
                                     id = "bandwidth_rotary",
                                     min = 1,
                                     max = 200,
+                                    default = 40,
                                     value = ps.bandwidth,
                                     notifier = function()
                                         vb.views.bandwidth.value = vb.views.bandwidth_rotary.value
@@ -646,6 +644,7 @@ function PadSynthWindow:gui()
                                     value = ps.bandwidth_growth,
                                     min = 0,
                                     max = 3,
+                                    default = 1,
                                     notifier = function()
                                         vb.views.growth.value = vb.views.growth_rotary.value
                                     end
@@ -1148,15 +1147,36 @@ function PadSynthWindow:gui()
             spacing = 0,
             style = "group",
             vb:column {
-                width = 0.75 * full_width,
-                uniform = true,
+                width = 0.10 * full_width,
                 margin = control_margin,
                 spacing = control_spacing,
                 vb:horizontal_aligner {
-                    mode = "left",
+                    mode = "center",
+                    vb:text {text = "Scale"}
+                },
+                vb:horizontal_aligner {
+                    mode = "center",
+                    vb:rotary {
+                        id = "formula_length",
+                        min = -249,
+                        max = 0,
+                        value = ps.formula_length,
+                        notifier = function()
+                            self:apply_formula()
+                        end
+                    }
+                },
+                tooltip = "Scale the X axis"
+            },
+            vb:column {
+                width = 0.90 * full_width,
+                uniform = true,
+                margin = control_margin,
+                spacing = control_spacing,
+                vb:row {
                     vb:popup {
                         id = "formula_presets",
-                        width = 150,
+                        width = 0.15 * full_width,
                         items = {
                             "-- Overtone Formula --",
                             "All Overtones",
@@ -1166,7 +1186,6 @@ function PadSynthWindow:gui()
                             "Soft Saw",
                             "Square",
                             "Triangle",
-                            "-- Scalable Presets: --",
                             "Linear Ramp",
                             "Cosinus Ramp",
                             "Square Root Ramp",
@@ -1221,7 +1240,8 @@ function PadSynthWindow:gui()
                                 vb.views.formula_string.value = "(1 + cos(x * (2 * 32000 + 1) * pi))/ 2"
                             end
                         end
-                    }
+                    },
+                    vb:text {id = "formula_error", width = 0.60 * full_width, text = "", style = "strong"}
                 },
                 vb:textfield {
                     id = "formula_string",
@@ -1232,75 +1252,6 @@ function PadSynthWindow:gui()
                     notifier = function()
                         self:apply_formula()
                     end
-                },
-                vb:text {id = "formula_error", width = "100%", text = "", style = "strong"}
-            },
-            vb:horizontal_aligner {
-                width = 0.25 * full_width,
-                mode = "justify",
-                margin = control_margin,
-                spacing = dialog_spacing,
-                vb:column {
-                    vb:text {text = "Curvature"},
-                    vb:horizontal_aligner {
-                        mode = "center",
-                        vb:rotary {
-                            id = "formula_curvature",
-                            min = -1,
-                            max = 1,
-                            value = ps.formula_curvature,
-                            notifier = function()
-                                self:apply_formula()
-                            end
-                        }
-                    }
-                },
-                vb:column {
-                    vb:text {text = "Curve Torsion"},
-                    vb:horizontal_aligner {
-                        mode = "center",
-                        vb:rotary {
-                            id = "formula_torsion",
-                            min = -1,
-                            max = 1,
-                            default = -1,
-                            value = ps.formula_torsion,
-                            notifier = function()
-                                self:apply_formula()
-                            end
-                        }
-                    }
-                },
-                vb:column {
-                    vb:text {text = "Curve Shape"},
-                    vb:horizontal_aligner {
-                        mode = "center",
-                        vb:rotary {
-                            id = "formula_shape",
-                            min = -1,
-                            max = 1,
-                            value = ps.formula_shape,
-                            notifier = function()
-                                self:apply_formula()
-                            end
-                        }
-                    }
-                },
-                vb:column {
-                    vb:text {text = "X Axis Scale"},
-                    vb:horizontal_aligner {
-                        mode = "center",
-                        vb:rotary {
-                            id = "formula_length",
-                            min = -249,
-                            max = 0,
-                            value = ps.formula_length,
-                            notifier = function()
-                                self:apply_formula()
-                            end
-                        }
-                    },
-                    tooltip = "Scale the X axis\n(works only for formulas based on the x variable)"
                 }
             }
         },
@@ -1316,6 +1267,15 @@ function PadSynthWindow:gui()
                 spacing = control_spacing,
                 mode = "justify",
                 vb:row {
+                    vb:button {
+                        text = "  Clear ",
+                        notifier = function()
+                            for i = 1, 256 do
+                                self.harmonics[i] = 0
+                            end
+                            self:update_harmonics_sliders()
+                        end
+                    },
                     vb:button {
                         text = "  Reset All Overtones ",
                         notifier = function()
@@ -1549,54 +1509,135 @@ function PadSynthWindow:gui()
                 height = 104,
                 spacing = control_spacing,
                 margin = 0,
-                vb:row {id = "output_group", style = "border", spacing = 0, margin = 0, height = 104},
-                vb:vertical_aligner {
-                    mode = "center",
-                    margin = 0,
-                    spacing = 0,
-                    vb:column {
-                        style = "group",
+                vb:row {
+                    height = "100%",
+                    style = "group",
+                    vb:vertical_aligner {
                         margin = control_margin,
                         spacing = control_spacing,
                         width = 200,
-                        uniform = true,
-                        vb:button {
-                            width = "100%",
-                            text = " Send to Formula ",
-                            notifier = function()
-                                local formula = "(function() local h = {"
-                                for i = 1, 256 do
-                                    formula = formula .. "[" .. i .. "]=" .. self.harmonics_output[i] .. ","
-                                end
-                                formula = formula .. "}; return h[i] end)()"
-                                vb.views.formula_string.value = formula
-                                for i = 1, 256 do
-                                    self.harmonics[i] = 1
-                                end
-                                vb.views.formula_curvature.value = 0
-                                vb.views.formula_torsion.value = 0
-                                vb.views.formula_shape.value = 0
-                                vb.views.formula_length.value = 0
-                                self:update_harmonics_sliders()
-                            end
+                        height = "100%",
+                        mode = "distribute",
+                        vb:horizontal_aligner {
+                            mode = "center",
+                            vb:text {
+                                text = "Final Overtone Values",
+                                font = "bold"
+                            }
                         },
-                        vb:button {
+                        vb:space {height = 5},
+                        vb:horizontal_aligner {
+                            mode = "center",
+                            vb:text {
+                                text = "Base Function: "
+                            },
+                            vb:popup {
+                                id = "base_function",
+                                items = {"Sine", "Saw", "Square", "Soft Saw", "Triangle", "Circle"},
+                                value = ps.base_function,
+                                notifier = function()
+                                    self:apply_formula()
+                                end,
+                                tooltip = "Replace each overtone by an overtone serie"
+                            }
+                        },
+                        vb:horizontal_aligner {
+                            mode = "distribute",
                             width = "100%",
-                            text = " Send to Sliders ",
-                            notifier = function()
-                                for i = 1, 256 do
-                                    self.harmonics[i] = self.harmonics_output[i]
+                            vb:column {
+                                vb:text {text = "Curvature"},
+                                vb:horizontal_aligner {
+                                    mode = "center",
+                                    vb:rotary {
+                                        id = "formula_curvature",
+                                        min = -1,
+                                        max = 1,
+                                        value = ps.formula_curvature,
+                                        notifier = function()
+                                            self:apply_formula()
+                                        end
+                                    }
+                                }
+                            },
+                            vb:column {
+                                vb:text {text = "Torsion"},
+                                vb:horizontal_aligner {
+                                    mode = "center",
+                                    vb:rotary {
+                                        id = "formula_torsion",
+                                        min = -1,
+                                        max = 1,
+                                        default = -1,
+                                        value = ps.formula_torsion,
+                                        notifier = function()
+                                            self:apply_formula()
+                                        end
+                                    }
+                                }
+                            },
+                            vb:column {
+                                visible = false, -- keep for compatibility with short-lived version?
+                                vb:text {text = "Shape"},
+                                vb:horizontal_aligner {
+                                    mode = "center",
+                                    vb:rotary {
+                                        id = "formula_shape",
+                                        min = -1,
+                                        max = 1,
+                                        value = ps.formula_shape,
+                                        notifier = function()
+                                            self:apply_formula()
+                                        end
+                                    }
+                                }
+                            }
+                        },
+                        vb:space {height = 5},
+                        vb:horizontal_aligner {
+                            mode = "center",
+                            vb:button {
+                                text = " Send to Formula ",
+                                notifier = function()
+                                    local formula = "(function() local h = {"
+                                    for i = 1, 256 do
+                                        formula =
+                                            formula .. "[" .. i .. "]=" .. self.pad_synth.prepared_harmonics[i] .. ","
+                                    end
+                                    formula = formula .. "}; return h[i] end)()"
+                                    vb.views.formula_string.value = formula
+                                    for i = 1, 256 do
+                                        self.harmonics[i] = 1
+                                    end
+                                    vb.views.base_function.value = 1
+                                    vb.views.formula_curvature.value = 0
+                                    vb.views.formula_torsion.value = 0
+                                    vb.views.formula_shape.value = 0
+                                    vb.views.formula_length.value = 0
+                                    self:update_harmonics_sliders()
                                 end
-                                vb.views.formula_string.value = "1"
-                                vb.views.formula_curvature.value = 0
-                                vb.views.formula_torsion.value = 0
-                                vb.views.formula_shape.value = 0
-                                vb.views.formula_length.value = 0
-                                self:update_harmonics_sliders()
-                            end
+                            }
+                        },
+                        vb:horizontal_aligner {
+                            mode = "center",
+                            vb:button {
+                                text = " Send to Sliders ",
+                                notifier = function()
+                                    for i = 1, 256 do
+                                        self.harmonics[i] = self.pad_synth.prepared_harmonics[i]
+                                    end
+                                    vb.views.base_function.value = 1
+                                    vb.views.formula_string.value = "1"
+                                    vb.views.formula_curvature.value = 0
+                                    vb.views.formula_torsion.value = 0
+                                    vb.views.formula_shape.value = 0
+                                    vb.views.formula_length.value = 0
+                                    self:update_harmonics_sliders()
+                                end
+                            }
                         }
                     }
-                }
+                },
+                vb:row {id = "output_group", style = "border", spacing = 0, margin = 0, height = 104}
             }
         },
         -- Status
@@ -1701,37 +1742,32 @@ function PadSynthWindow:apply_formula()
     setfenv(formula, formula_context)
     local length = vb.views.formula_length.value + 255
     for i = 1, 256 do
-        formula_context.i = i
+        formula_context.i = 1 + math.floor(length * i / 256)
         formula_context.x = (i - 1) / length
-        local status, val =
+        local status, formula_value =
             xpcall(
             formula,
             function(err)
                 vb.views.formula_error.text = "ERROR: " .. err
             end
         )
-        if status and type(val) ~= "number" then
-            vb.views.formula_error.text = "ERROR: The formula returns " .. type(val) .. " instead of a number"
-            return
-        end
-        if status then
-            val =
-                curve(
-                val,
-                vb.views.formula_shape.value,
-                vb.views.formula_torsion.value,
-                vb.views.formula_curvature.value
-            )
-            val =
-                curve(
-                val,
-                vb.views.formula_shape.value,
-                vb.views.formula_torsion.value,
-                vb.views.formula_curvature.value
-            )
-            self.harmonics_output[i] = self.harmonics[i] * clamp(val, 0.0, 1.0)
+        if status and type(formula_value) == "number" then
+            self.harmonics_output[i] = self.harmonics[i] * clamp(formula_value, 0.0, 1.0)
+        else
+            self.harmonics_output[i] = 0
+            if type(formula_value) ~= "number" then
+                vb.views.formula_error.text =
+                    "ERROR: The formula returns " .. type(formula_value) .. " instead of a number"
+                return
+            end
         end
     end
+    self:update_parameters()
+    self.pad_synth:prepare_harmonics(
+        vb.views.formula_curvature.value,
+        vb.views.formula_torsion.value,
+        vb.views.formula_shape.value
+    )
     self:update_harmonics_output_display()
 end
 
@@ -1749,15 +1785,18 @@ function PadSynthWindow:update_harmonics_sliders()
 end
 
 function PadSynthWindow:update_harmonics_output_display()
+    -- local h = self.harmonics_output
+    local harmonics = self.pad_synth.prepared_harmonics
+
     local maximum = 0
     for i = 1, 256 do
-        if self.harmonics_output[i] > maximum then
-            maximum = self.harmonics_output[i]
+        if harmonics[i] > maximum then
+            maximum = harmonics[i]
         end
     end
 
     for i = 1, 256 do
-        local y = clamp(self.harmonics_output[i] / maximum, 0, 1)
+        local y = clamp(harmonics[i] / maximum, 0, 1)
         local h = 150
         local yy = math.floor(y * h + 0.5)
         self.vb.views["output_above_" .. i].height = 1 + h - yy

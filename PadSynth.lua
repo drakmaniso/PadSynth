@@ -39,7 +39,7 @@ function PadSynth:generate_samples()
 
     self:save_parameters()
 
-    self:prepare_harmonics()
+    -- self:prepare_harmonics()
 
     -- Generate the samples
 
@@ -77,7 +77,12 @@ end
 
 -------------------------------------------------------------------------------
 
-function PadSynth:prepare_harmonics()
+function PadSynth:prepare_harmonics(curvature, torsion, shape)
+    -- for i = 1, 256 do
+    --     self.harmonics_output[i] = curve(self.harmonics_output[i], shape, torsion, curvature)
+    --     self.harmonics_output[i] = curve(self.harmonics_output[i], shape, torsion, curvature)
+    -- end
+
     if self.base_function == 1 then
         self.prepared_harmonics = self.harmonics_output
     elseif self.base_function == 2 then
@@ -186,6 +191,10 @@ function PadSynth:prepare_harmonics()
         for i = 1, 256 do
             self.prepared_harmonics[i] = self.prepared_harmonics[i] / ampl_max
         end
+    end
+    for i = 1, 256 do
+        self.prepared_harmonics[i] = curve(self.prepared_harmonics[i], shape, torsion, curvature)
+        self.prepared_harmonics[i] = curve(self.prepared_harmonics[i], shape, torsion, curvature)
     end
 end
 
@@ -775,7 +784,7 @@ function PadSynth:load_parameters()
 
     self.harmonics = data.harmonics
 
-        self.formula_string = data.formula_string
+    self.formula_string = data.formula_string
     if self.formula_string == nil then
         self.formula_string = "1"
     end
