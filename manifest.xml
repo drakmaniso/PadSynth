@@ -3,9 +3,9 @@
   <ApiVersion>6.1</ApiVersion>
   <AutoUpgraded>true</AutoUpgraded>
   <Id>org.drakmaniso.Padsynth</Id>
-  <Version>1.4</Version>
+  <Version>2.0</Version>
   <Author>drakmaniso | moussault.laurent@gmail.com</Author>
-  <Name>PadSynth</Name>
+  <Name>PadSynth2</Name>
   <Category>Sample Generator, Synth, Instrument</Category>
   <Description>PADsynth waveform generator</Description>
   <Homepage>http://www.renoise.com/tools/padsynth</Homepage>
