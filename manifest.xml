@@ -2,10 +2,10 @@
 <RenoiseScriptingTool doc_version="0">
   <ApiVersion>6.1</ApiVersion>
   <AutoUpgraded>true</AutoUpgraded>
-  <Id>org.drakmaniso.Padsynth</Id>
+  <Id>org.drakmaniso.Padsynth2</Id>
   <Version>2.0</Version>
   <Author>drakmaniso | moussault.laurent@gmail.com</Author>
-  <Name>PadSynth2</Name>
+  <Name>PadSynth 2</Name>
   <Category>Sample Generator, Synth, Instrument</Category>
   <Description>PADsynth waveform generator</Description>
   <Homepage>http://www.renoise.com/tools/padsynth</Homepage>
