@@ -2,7 +2,7 @@
 <RenoiseScriptingTool doc_version="0">
   <ApiVersion>6.1</ApiVersion>
   <AutoUpgraded>true</AutoUpgraded>
-  <Id>org.drakmaniso.Padsynth2</Id>
+  <Id>org.drakmaniso.PadSynth2</Id>
   <Version>2.0</Version>
   <Author>drakmaniso | moussault.laurent@gmail.com</Author>
   <Name>PadSynth 2</Name>
