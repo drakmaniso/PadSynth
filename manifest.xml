@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <RenoiseScriptingTool doc_version="0">
-  <ApiVersion>6</ApiVersion>
+  <ApiVersion>6.1</ApiVersion>
   <AutoUpgraded>true</AutoUpgraded>
   <Id>org.drakmaniso.Padsynth</Id>
-  <Version>1.3</Version>
+  <Version>1.4</Version>
   <Author>drakmaniso | moussault.laurent@gmail.com</Author>
   <Name>PadSynth</Name>
   <Category>Sample Generator, Synth, Instrument</Category>
