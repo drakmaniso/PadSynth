@@ -1,4 +1,5 @@
 local utils = require "utils"
+local background = require "background"
 
 -- CONSTANTS ------------------------------------------------------------------
 
@@ -11,9 +12,11 @@ local DIALOG_BUTTON_HEIGHT = renoise.ViewBuilder.DEFAULT_DIALOG_BUTTON_HEIGHT
 -- GLOBALS --------------------------------------------------------------------
 
 local window
-local vb, views
+local vb
 
 local main_display
+
+local frequencies_modified = false
 
 -- DISPLAY --------------------------------------------------------------------
 
@@ -28,12 +31,8 @@ local function new_display(width, height, step)
     }
     display.view:add_child(vb:space {width = 1, height = height + 2})
     for i = 1, width do
-        local x = (i - 1) / (width - 1)
-        local y = x * height
-        local bottom = math.floor(y + 0.5)
-        local top = height - y
-        display.tops[i] = vb:space {width = step, height = top + 1}
-        display.bottoms[i] = vb:row {style = "plain", width = step, height = bottom + 1}
+        display.tops[i] = vb:space {width = step, height = height + 1}
+        display.bottoms[i] = vb:row {style = "plain", width = step, height = 1}
         display.view:add_child(
             vb:column {
                 display.tops[i],
@@ -45,7 +44,7 @@ local function new_display(width, height, step)
     return display
 end
 
-local function update_display(display, fn)
+local function update_display_in_background(display, fn)
     for i = 1, display.width do
         local x = (i - 1) / (display.width - 1)
         local y = utils.clamp(fn(x), 0, 1) * display.height --TODO: clamp fn(x)
@@ -53,6 +52,7 @@ local function update_display(display, fn)
         local top = display.height - bottom
         display.tops[i].height = top + 1
         display.bottoms[i].height = bottom + 1
+        background.yield()
     end
 end
 
@@ -65,12 +65,51 @@ local function disp_f(x)
     -- return 0.5 + math.sin(x * 4 * math.pi) / 2
 end
 
+local function create_top_row()
+    return vb:horizontal_aligner {
+        mode = "justify",
+        margin = MARGIN,
+        spacing = SPACING,
+        vb:row {
+            vb:text {
+                height = DIALOG_BUTTON_HEIGHT,
+                text = "Instrument: "
+            },
+            vb:popup {
+                height = DIALOG_BUTTON_HEIGHT,
+                items = {"1: -", "2: -", "3: -"}
+            }
+        },
+        vb:row {
+            vb:button {height = DIALOG_BUTTON_HEIGHT, text = " Randomize "},
+            vb:popup {height = DIALOG_BUTTON_HEIGHT, items = {"Fully random", "String"}}
+        }
+    }
+end
+
+local function create_bottom_row()
+    return vb:horizontal_aligner {
+        mode = "justify",
+        margin = MARGIN,
+        spacing = SPACING,
+        vb:row {
+            vb:text {
+                id = "status",
+                height = DIALOG_BUTTON_HEIGHT,
+                text = "(status)"
+            }
+        },
+        vb:row {
+            vb:button {height = DIALOG_BUTTON_HEIGHT, text = " Generate "}
+        }
+    }
+end
+
 local function create_main_window()
     vb = renoise.ViewBuilder()
-    views = vb.views
 
-    main_display = new_display(256, 200, 3)
-    update_display(main_display, disp_f)
+    main_display = new_display(768, 200, 1)
+    frequencies_modified = true
 
     return vb:column {
         style = "body",
@@ -78,6 +117,7 @@ local function create_main_window()
         width = 800,
         margin = renoise.ViewBuilder.DEFAULT_DIALOG_MARGIN,
         spacing = renoise.ViewBuilder.DEFAULT_CONTROL_SPACING,
+        create_top_row(),
         vb:row {
             style = "group",
             margin = MARGIN,
@@ -86,20 +126,15 @@ local function create_main_window()
                 min = -10,
                 max = 10,
                 notifier = function()
-                    update_display(
-                        main_display,
-                        function(x)
-                            return utils.bend(disp_f(x), views.foo_rotary.value)
-                        end
-                    )
+                    frequencies_modified = true
                 end
             }
         },
         vb:row {
-            style = "group",
             margin = MARGIN,
             main_display.view
-        }
+        },
+        create_bottom_row()
     }
 end
 
@@ -110,6 +145,45 @@ local function show_main_window()
         window = renoise.app():show_custom_dialog("PadSynth 2", create_main_window())
     end
 end
+
+-- BACKGROUND PROCESS ---------------------------------------------------------
+
+local function on_app_iddle()
+    if not window or not window.visible then
+        if background.is_running() then
+            background.abort()
+        end
+        return
+    end
+
+    if frequencies_modified then
+        if background.is_running() then
+            background.abort()
+        end
+        frequencies_modified = false
+        background.start(
+            function()
+                update_display_in_background(
+                    main_display,
+                    function(x)
+                        return utils.bend(disp_f(x), vb.views.foo_rotary.value)
+                    end
+                )
+            end,
+            function()
+                vb.views.status.text = "Updating..."
+            end,
+            function()
+                vb.views.status.text = ""
+            end
+        )
+    end
+    if background.is_running() then
+        background.continue()
+    end
+end
+
+renoise.tool().app_idle_observable:add_notifier(on_app_iddle)
 
 -- RENOISE HOOKS --------------------------------------------------------------
 
