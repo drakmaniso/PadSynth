@@ -48,7 +48,7 @@ end
 local function update_display(display, fn)
     for i = 1, display.width do
         local x = (i - 1) / (display.width - 1)
-        local y = fn(x) * display.height --TODO: clamp fn(x)
+        local y = utils.clamp(fn(x), 0, 1) * display.height --TODO: clamp fn(x)
         local bottom = math.floor(y + 0.5)
         local top = display.height - bottom
         display.tops[i].height = top + 1
@@ -58,11 +58,19 @@ end
 
 -- MAIN WINDOW ----------------------------------------------------------------
 
+local function disp_f(x)
+    local i = 1 + math.floor(x * 64)
+    return 1 - 4 * math.abs(x % 0.5 - 0.25)
+    -- return 1 / i
+    -- return 0.5 + math.sin(x * 4 * math.pi) / 2
+end
+
 local function create_main_window()
     vb = renoise.ViewBuilder()
     views = vb.views
 
-    main_display = new_display(768, 200, 1)
+    main_display = new_display(256, 200, 3)
+    update_display(main_display, disp_f)
 
     return vb:column {
         style = "body",
@@ -75,13 +83,13 @@ local function create_main_window()
             margin = MARGIN,
             vb:rotary {
                 id = "foo_rotary",
-                min = 0,
-                max = 1,
+                min = -10,
+                max = 10,
                 notifier = function()
                     update_display(
                         main_display,
                         function(x)
-                            return (1 - x) * views.foo_rotary.value
+                            return utils.bend(disp_f(x), views.foo_rotary.value)
                         end
                     )
                 end
@@ -105,8 +113,6 @@ end
 
 -- RENOISE HOOKS --------------------------------------------------------------
 
-_AUTO_RELOAD_DEBUG = true
-
 renoise.tool():add_menu_entry {
     name = "Main Menu:Tools:PadSynth 2...",
     invoke = function()
@@ -114,15 +120,21 @@ renoise.tool():add_menu_entry {
     end
 }
 
-renoise.tool():add_menu_entry {
-    name = "Scripting Menu:Tools:PadSynth 2...",
+renoise.tool():add_keybinding {
+    name = "Global:Tools:PadSynth 2...",
     invoke = function()
         show_main_window()
     end
 }
 
-renoise.tool():add_keybinding {
-    name = "Global:Tools:PadSynth 2...",
+-- For easier development:
+
+_AUTO_RELOAD_DEBUG = function()
+    utils = require "utils"
+end
+
+renoise.tool():add_menu_entry {
+    name = "Scripting Menu:Tools:PadSynth 2...",
     invoke = function()
         show_main_window()
     end
